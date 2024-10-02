@@ -14,10 +14,10 @@ mode = st.sidebar.radio(
     ("Default", "Data Scientist"),
     index=0)
 
-st.title("4o mini")
+st.title("🤖 4o")
 
 if "openai_model" not in st.session_state:
-    st.session_state.openai_model = "gpt-4o-mini-2024-07-18"
+    st.session_state.openai_model = "gpt-4o-2024-08-06"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
