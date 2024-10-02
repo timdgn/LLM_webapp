@@ -27,17 +27,15 @@ if "files_content" not in st.session_state:
 if "mode_prefix" not in st.session_state:
     st.session_state.mode_prefix = ""
 
-# Add multiple file uploader
-uploaded_files = st.file_uploader("Choose files", type=None, accept_multiple_files=True)
+# Add file uploaders for both text files and images
+text_files = st.file_uploader("Choose text files", type=None, accept_multiple_files=True)
+image_files = st.file_uploader("Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-# Process uploaded files
-if uploaded_files:
+# Process uploaded text files
+if text_files:
     st.session_state.files_content = []
-    for uploaded_file in uploaded_files:
-        # Read file content
+    for uploaded_file in text_files:
         file_content = uploaded_file.read()
-
-        # Try to decode as text, if not possible, encode as base64
         try:
             decoded_content = file_content.decode('utf-8')
             st.session_state.files_content.append(f"\nAttached text file '{uploaded_file.name}':\n{decoded_content}")
@@ -45,6 +43,16 @@ if uploaded_files:
             encoded_content = base64.b64encode(file_content).decode('utf-8')
             st.session_state.files_content.append(
                 f"\nAttached binary file '{uploaded_file.name}':\n[Binary content encoded in base64]")
+
+# Process uploaded images
+image_data_list = []
+if image_files:
+    for image_file in image_files:
+        st.image(image_file, caption=f"Uploaded Image: {image_file.name}")
+        image_bytes = image_file.getvalue()
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+        image_data = f"data:image/{image_file.type.split('/')[-1]};base64,{image_base64}"
+        image_data_list.append(image_data)
 
 # Display chat history
 for message in st.session_state.messages:
@@ -75,15 +83,29 @@ if prompt := st.chat_input("Comment puis-je t'aider ?"):
             full_prompt += file_content
         st.session_state.files_content = []  # Clear files content after using them
 
-    # Add message to chat history
-    st.session_state.messages.append({"role": "user", "content": full_prompt})
+    # Prepare the messages for the API call
+    messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+
+    # For the new message, prepare content based on whether images are present
+    new_message_content = []
+    if image_data_list:
+        new_message_content = [{"type": "text", "text": full_prompt}]
+        for image_data in image_data_list:
+            new_message_content.append({"type": "image_url", "image_url": {"url": image_data}})
+    else:
+        new_message_content = full_prompt
+
+    messages.append({"role": "user", "content": new_message_content})
+
+    # Add message to chat history (only showing text in UI)
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)  # Only show original prompt to user, not files content
+        st.markdown(prompt)
 
     with st.chat_message("assistant"):
         stream = client.chat.completions.create(
             model=st.session_state.openai_model,
-            messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+            messages=messages,
             stream=True)
         response = st.write_stream(stream)
     st.session_state.messages.append({"role": "assistant", "content": response})

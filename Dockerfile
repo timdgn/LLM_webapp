@@ -10,7 +10,7 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 # If you don't have a requirements.txt, you can remove this line
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Make port 80 available to the world outside this container
 # Adjust this if your app uses a different port
