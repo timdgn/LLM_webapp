@@ -2,6 +2,7 @@ from openai import OpenAI
 import streamlit as st
 import base64
 
+st.set_page_config(page_title="Tim LLM", page_icon="✨")
 
 # Load the API key from Streamlit secrets
 api_key = st.secrets["openai_api_key"]
@@ -14,10 +15,10 @@ mode = st.sidebar.radio(
     ("Default", "Data Scientist"),
     index=0)
 
-st.title("🤖 4o")
-
 if "openai_model" not in st.session_state:
     st.session_state.openai_model = "gpt-4o-2024-08-06"
+
+st.title(f"🤖 {st.session_state.openai_model.split('-')[1]}")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
