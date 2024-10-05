@@ -104,9 +104,15 @@ with st.sidebar:
             key=lambda x: x[1]["last_updated"],
             reverse=True):
         last_updated = datetime.fromisoformat(thread_data["last_updated"]).strftime("%Y-%m-%d %H:%M")
-        preview = thread_data["messages"][0]["content"][:30] + "..." if thread_data["messages"] else "Empty thread"
-        if isinstance(preview, list):
-            preview = next((item["text"] for item in preview if isinstance(item, dict) and "text" in item), "Image thread")
+
+        if thread_data["messages"]:
+            if isinstance(thread_data["messages"][0]["content"], str):
+                preview = thread_data["messages"][0]["content"][:30] + "..."
+            else:
+                preview = "Image thread"
+        else:
+            preview = "Empty thread"
+
         col1, col2 = st.columns([3, 1])
 
         with col1:
@@ -139,8 +145,7 @@ if text_files:
         except UnicodeDecodeError:
             encoded_content = base64.b64encode(file_content).decode('utf-8')
             st.session_state.files_content.append(
-                f"\nAttached binary file '{uploaded_file.name}':\n[Binary content encoded in base64]"
-            )
+                f"\nAttached binary file '{uploaded_file.name}':\n[Binary content encoded in base64]")
 
 # Process uploaded images
 image_data_list = []
@@ -157,8 +162,7 @@ if st.session_state.current_thread_id is None:
     st.session_state.threads[st.session_state.current_thread_id] = {
         "id": st.session_state.current_thread_id,
         "last_updated": datetime.now().isoformat(),
-        "messages": []
-    }
+        "messages": []}
     save_thread(st.session_state.current_thread_id, [])
 
 # Display current thread messages
@@ -191,11 +195,8 @@ if prompt := st.chat_input("Comment puis-je t'aider ?"):
                 image_base64 = base64.b64encode(image_bytes).decode('utf-8')
             new_message_content.append({
                 "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{image_base64}"
-                },
-                "filename": image_data["filename"]
-            })
+                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"},
+                "filename": image_data["filename"]})
     else:
         new_message_content = full_prompt
 
@@ -210,13 +211,11 @@ if prompt := st.chat_input("Comment puis-je t'aider ?"):
     with st.chat_message("assistant"):
         messages = [
             {"role": m["role"], "content": m["content"] if isinstance(m["content"], str) else next((item["text"] for item in m["content"] if isinstance(item, dict) and "text" in item), "")}
-            for m in current_thread["messages"]
-        ]
+            for m in current_thread["messages"]]
         stream = client.chat.completions.create(
             model=st.session_state.openai_model,
             messages=messages,
-            stream=True
-        )
+            stream=True)
         response = st.write_stream(stream)
 
     # Add assistant response to thread

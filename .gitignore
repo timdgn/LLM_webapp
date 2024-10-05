@@ -1,2 +1,4 @@
 .streamlit/secrets.toml
 .idea
+thread_history
+uploaded_images
