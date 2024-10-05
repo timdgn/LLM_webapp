@@ -175,9 +175,42 @@ for message in current_thread["messages"]:
 
 # Chat input
 if prompt := st.chat_input("What's on your mind ? 🤔"):
-    # Prepare mode prefix
-    mode_prefix = ""
-    if not current_thread["messages"] and mode == "Data Scientist":
+    # Prepare message content for display and storage
+    display_prompt = prompt
+
+    if hasattr(st.session_state, 'files_content') and st.session_state.files_content:
+        for file_content in st.session_state.files_content:
+            display_prompt += file_content
+        st.session_state.files_content = []
+
+    # Prepare message content for API and display
+    if image_data_list:
+        api_message_content = [{"type": "text", "text": prompt}]  # Use original prompt here
+        display_message_content = [{"type": "text", "text": display_prompt}]
+
+        for image_data in image_data_list:
+            image_content = {
+                "type": "image_url",
+                "filename": image_data["filename"]
+            }
+            api_message_content.append(image_content)
+            display_message_content.append(image_content)
+    else:
+        api_message_content = prompt  # Use original prompt here
+        display_message_content = display_prompt
+
+    # Add user message to thread (without prefix)
+    current_thread["messages"].append({"role": "user", "content": api_message_content})
+
+    # Display user message
+    with st.chat_message("user", avatar="🧑‍⚕️"):
+        display_message({"content": display_message_content})
+
+    # Prepare API request
+    messages = []
+
+    # Add mode prefix as a system message if needed
+    if not current_thread["messages"][:-1] and mode == "Data Scientist":
         mode_prefix = """You are an expert in Python development, including its core libraries, popular frameworks like Flask, Streamlit and FastAPI, data science libraries such as NumPy and Pandas, and testing frameworks like pytest. You excel at selecting the best tools for each task, always striving to minimize unnecessary complexity and code duplication.
             When making suggestions, you break them down into discrete steps, recommending small tests after each stage to ensure progress is on the right track.
             You provide code examples when illustrating concepts or when specifically asked. However, if you can answer without code, that is preferred. You're open to elaborating if requested.
@@ -186,42 +219,15 @@ if prompt := st.chat_input("What's on your mind ? 🤔"):
             You always seek clarification if anything is unclear or ambiguous. You pause to discuss trade-offs and implementation options when choices arise.
             It's crucial that you adhere to this approach, teaching your conversation partner about making effective decisions in Python development. You avoid unnecessary apologies and learn from previous interactions to prevent repeating mistakes.
             You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
-            Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process.
-            Here's your task:"""
+            Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process."""
+        messages.append({"role": "system", "content": mode_prefix})
 
-    # Combine prompt with mode prefix and file contents
-    full_prompt = mode_prefix + prompt
-    if hasattr(st.session_state, 'files_content') and st.session_state.files_content:
-        for file_content in st.session_state.files_content:
-            full_prompt += file_content
-        st.session_state.files_content = []
-
-    # Prepare message content
-    if image_data_list:
-        new_message_content = [{"type": "text", "text": full_prompt}]
-        for image_data in image_data_list:
-            image_path = str(IMAGE_DIR / image_data["filename"])
-            with open(image_path, "rb") as img_file:
-                image_bytes = img_file.read()
-                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-            new_message_content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"},
-                "filename": image_data["filename"]})
-    else:
-        new_message_content = full_prompt
-
-    # Add user message to thread
-    current_thread["messages"].append({"role": "user", "content": new_message_content})
-
-    # Prepare API request
-    messages = []
+    # Add conversation history
     for msg in current_thread["messages"]:
         api_message = {"role": msg["role"]}
 
         # Handle different content types
         if isinstance(msg["content"], list):
-            # Complex message with text and images
             api_content = []
             for item in msg["content"]:
                 if item["type"] == "text":
@@ -236,17 +242,12 @@ if prompt := st.chat_input("What's on your mind ? 🤔"):
                                             "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}})
             api_message["content"] = api_content
         else:
-            # Simple text message
             api_message["content"] = msg["content"]
 
         messages.append(api_message)
 
-    # Display user message
-    with st.chat_message("user", avatar=avatars["user"]):
-        display_message({"content": new_message_content})
-
     # Get and display assistant response
-    with st.chat_message("assistant", avatar=avatars["assistant"]):
+    with st.chat_message("assistant", avatar="🤖"):
         stream = client.chat.completions.create(
             model=st.session_state.openai_model,
             messages=messages,
