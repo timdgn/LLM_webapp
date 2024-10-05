@@ -131,8 +131,8 @@ with st.sidebar:
 st.title(f"🤖 4o mini")
 
 # File uploaders
-text_files = st.file_uploader("Choose text files", type=None, accept_multiple_files=True)
-image_files = st.file_uploader("Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+text_files = st.file_uploader("📄 Choose text files", type=None, accept_multiple_files=True)
+image_files = st.file_uploader("🌆 Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 # Process uploaded files
 if text_files:
@@ -153,7 +153,6 @@ if image_files:
     for image_file in image_files:
         image_filename = save_uploaded_image(image_file)
         image_path = str(IMAGE_DIR / image_filename)
-        st.image(image_path)
         image_data_list.append({"filename": image_filename, "original_name": image_file.name})
 
 # Ensure we have a current thread
@@ -165,18 +164,30 @@ if st.session_state.current_thread_id is None:
         "messages": []}
     save_thread(st.session_state.current_thread_id, [])
 
+avatars = {"user": "🧑‍⚕️",
+           "assistant": "🤖"}
+
 # Display current thread messages
 current_thread = st.session_state.threads[st.session_state.current_thread_id]
 for message in current_thread["messages"]:
-    with st.chat_message(message["role"]):
+    with st.chat_message(message["role"], avatar=avatars[message["role"]]):
         display_message(message)
 
 # Chat input
-if prompt := st.chat_input("Comment puis-je t'aider ?"):
+if prompt := st.chat_input("What's on your mind ? 🤔"):
     # Prepare mode prefix
     mode_prefix = ""
     if not current_thread["messages"] and mode == "Data Scientist":
-        mode_prefix = """You are an expert in Python development..."""  # Add your full prefix here
+        mode_prefix = """You are an expert in Python development, including its core libraries, popular frameworks like Flask, Streamlit and FastAPI, data science libraries such as NumPy and Pandas, and testing frameworks like pytest. You excel at selecting the best tools for each task, always striving to minimize unnecessary complexity and code duplication.
+            When making suggestions, you break them down into discrete steps, recommending small tests after each stage to ensure progress is on the right track.
+            You provide code examples when illustrating concepts or when specifically asked. However, if you can answer without code, that is preferred. You're open to elaborating if requested.
+            Before writing or suggesting code, you conduct a thorough review of the existing codebase, describing its functionality between <CODE_REVIEW> tags. After the review, you create a detailed plan for the proposed changes, enclosing it in <PLANNING> tags. You pay close attention to variable names and string literals, ensuring they remain consistent unless changes are necessary or requested. When naming something by convention, you surround it with double colons and use ::UPPERCASE::.
+            Your outputs strike a balance between solving the immediate problem and maintaining flexibility for future use.
+            You always seek clarification if anything is unclear or ambiguous. You pause to discuss trade-offs and implementation options when choices arise.
+            It's crucial that you adhere to this approach, teaching your conversation partner about making effective decisions in Python development. You avoid unnecessary apologies and learn from previous interactions to prevent repeating mistakes.
+            You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
+            Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process.
+            Here's your task:"""
 
     # Combine prompt with mode prefix and file contents
     full_prompt = mode_prefix + prompt
@@ -185,7 +196,7 @@ if prompt := st.chat_input("Comment puis-je t'aider ?"):
             full_prompt += file_content
         st.session_state.files_content = []
 
-    # Prepare API message content
+    # Prepare message content
     if image_data_list:
         new_message_content = [{"type": "text", "text": full_prompt}]
         for image_data in image_data_list:
@@ -203,15 +214,39 @@ if prompt := st.chat_input("Comment puis-je t'aider ?"):
     # Add user message to thread
     current_thread["messages"].append({"role": "user", "content": new_message_content})
 
+    # Prepare API request
+    messages = []
+    for msg in current_thread["messages"]:
+        api_message = {"role": msg["role"]}
+
+        # Handle different content types
+        if isinstance(msg["content"], list):
+            # Complex message with text and images
+            api_content = []
+            for item in msg["content"]:
+                if item["type"] == "text":
+                    api_content.append({"type": "text", "text": item["text"]})
+                elif item["type"] == "image_url" and "filename" in item:
+                    image_path = str(IMAGE_DIR / item["filename"])
+                    if os.path.exists(image_path):
+                        with open(image_path, "rb") as img_file:
+                            image_bytes = img_file.read()
+                            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                        api_content.append({"type": "image_url",
+                                            "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}})
+            api_message["content"] = api_content
+        else:
+            # Simple text message
+            api_message["content"] = msg["content"]
+
+        messages.append(api_message)
+
     # Display user message
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=avatars["user"]):
         display_message({"content": new_message_content})
 
     # Get and display assistant response
-    with st.chat_message("assistant"):
-        messages = [
-            {"role": m["role"], "content": m["content"] if isinstance(m["content"], str) else next((item["text"] for item in m["content"] if isinstance(item, dict) and "text" in item), "")}
-            for m in current_thread["messages"]]
+    with st.chat_message("assistant", avatar=avatars["assistant"]):
         stream = client.chat.completions.create(
             model=st.session_state.openai_model,
             messages=messages,
