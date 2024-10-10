@@ -10,6 +10,7 @@ import hashlib
 from PIL import Image
 import io
 from typing import Dict, List, Union, Any, Tuple
+import fitz
 
 # Constants
 HISTORY_DIR = Path("thread_history")
@@ -285,20 +286,46 @@ def get_thread_preview(thread_data: Dict[str, Any]) -> str:
     return "Image thread"
 
 
-def process_files(prompt: str, text_files, image_files) -> Tuple[str, List[Dict[str, str]]]:
+def process_files(prompt: str, uploaded_files) -> Tuple[str, List[Dict[str, str]]]:
     """
-    Process uploaded text and image files.
+    Process uploaded files of all types.
 
     Args:
         prompt (str): The user's prompt
-        text_files: Uploaded text files
-        image_files: Uploaded image files
+        uploaded_files: Uploaded files of any type
 
     Returns:
         Tuple[str, List[Dict[str, str]]]: The processed prompt and image data
     """
-    display_prompt = process_text_files(prompt, text_files)
-    image_data_list = process_image_files(image_files)
+    display_prompt = prompt
+    image_data_list = []
+
+    for uploaded_file in uploaded_files:
+        if uploaded_file.type == "application/pdf":
+            # Process PDF files
+            pdf_document = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+            pdf_text = ""
+            for page in pdf_document:
+                pdf_text += page.get_text()
+            pdf_document.close()
+            display_prompt += f"\nAttached PDF file '{uploaded_file.name}':\n{pdf_text}"
+
+        elif uploaded_file.type.startswith("image/"):
+            # Process image files
+            image_filename = save_uploaded_image(uploaded_file)
+            image_data_list.append({
+                "filename": image_filename,
+                "original_name": uploaded_file.name})
+
+        elif uploaded_file.type.startswith("text/"):
+            # Process text files
+            file_content = uploaded_file.read()
+            try:
+                decoded_content = file_content.decode('utf-8')
+                display_prompt += f"\nAttached text file '{uploaded_file.name}':\n{decoded_content}"
+            except UnicodeDecodeError:
+                display_prompt += f"\nAttached binary file '{uploaded_file.name}':\n[Binary content encoded in base64]"
+
     return display_prompt, image_data_list
 
 
@@ -372,19 +399,18 @@ def create_message_content(prompt: str, image_data_list: List[Dict[str, str]]):
     return message_content
 
 
-def handle_chat_input(client: OpenAI, thread: Dict[str, Any], text_files, image_files, mode: str):
+def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mode: str):
     """
     Handle the chat input and generate a response.
 
     Args:
         client (OpenAI): The OpenAI client
         thread (Dict[str, Any]): The current thread
-        text_files: Uploaded text files
-        image_files: Uploaded image files
+        uploaded_files: Uploaded files
         mode (str): The current chat mode
     """
     if prompt := st.chat_input("What's on your mind ? 🤔"):
-        display_prompt, image_data_list = process_files(prompt, text_files, image_files)
+        display_prompt, image_data_list = process_files(prompt, uploaded_files)
         message_content = create_message_content(display_prompt, image_data_list)
 
         thread["messages"].append({"role": "user", "content": message_content})
@@ -435,8 +461,7 @@ def main():
 
     st.title(f"🤖 {model}")
 
-    text_files = st.file_uploader("📄 Choose text files", type=None, accept_multiple_files=True)
-    image_files = st.file_uploader("🌆 Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("📄🌆 Choose text, pdf or image files", type=None, accept_multiple_files=True)
 
     if st.session_state.current_thread_id is None:
         thread_id, thread_data = create_new_thread()
@@ -451,7 +476,7 @@ def main():
             display_message(message)
 
     # Handle chat input
-    handle_chat_input(client, current_thread, text_files, image_files, mode)
+    handle_chat_input(client, current_thread, uploaded_files, mode)
 
 
 if __name__ == "__main__":
