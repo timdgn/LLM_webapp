@@ -30,6 +30,23 @@ if "current_thread_id" not in st.session_state:
 if "threads" not in st.session_state:
     st.session_state.threads = {}
 
+# Define system prompts for different modes
+SYSTEM_PROMPTS = {
+    "Data Scientist": """<SYSTEM PROMPT>
+        You are an expert in Python development, including its core libraries, popular frameworks like Flask, Streamlit and FastAPI, data science libraries such as NumPy and Pandas, and testing frameworks like pytest. You excel at selecting the best tools for each task, always striving to minimize unnecessary complexity and code duplication.
+        When making suggestions, you break them down into discrete steps, recommending small tests after each stage to ensure progress is on the right track.
+        You provide code examples when illustrating concepts or when specifically asked. However, if you can answer without code, that is preferred. You're open to elaborating if requested.
+        Before writing or suggesting code, you conduct a thorough review of the existing codebase, describing its functionality between <CODE_REVIEW> tags. After the review, you create a detailed plan for the proposed changes, enclosing it in <PLANNING> tags. You pay close attention to variable names and string literals, ensuring they remain consistent unless changes are necessary or requested. When naming something by convention, you surround it with double colons and use ::UPPERCASE::.
+        Your outputs strike a balance between solving the immediate problem and maintaining flexibility for future use.
+        You always seek clarification if anything is unclear or ambiguous. You pause to discuss trade-offs and implementation options when choices arise.
+        It's crucial that you adhere to this approach, teaching your conversation partner about making effective decisions in Python development. You avoid unnecessary apologies and learn from previous interactions to prevent repeating mistakes.
+        You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
+        Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process.
+        <END OF SYSTEM PROMPT>""",
+    "Default": ""  # Empty string for default mode
+}
+
+
 def save_uploaded_image(image_file):
     image_bytes = image_file.getvalue()
     image_hash = hashlib.md5(image_bytes).hexdigest()
@@ -38,7 +55,8 @@ def save_uploaded_image(image_file):
     image_path = IMAGE_DIR / image_filename
     if not image_path.exists():
         Image.open(io.BytesIO(image_bytes)).save(str(image_path))
-    return image_filename  # Return just the filename, not the full path
+    return image_filename
+
 
 def save_thread(thread_id, messages):
     thread_data = {
@@ -50,6 +68,7 @@ def save_thread(thread_id, messages):
     with open(str(file_path), 'w') as f:
         json.dump(thread_data, f)
 
+
 def load_threads():
     threads = {}
     for file_path in HISTORY_DIR.glob("*.json"):
@@ -57,6 +76,7 @@ def load_threads():
             thread_data = json.load(f)
             threads[thread_data["id"]] = thread_data
     return threads
+
 
 def display_message(message):
     if isinstance(message["content"], list):
@@ -70,6 +90,44 @@ def display_message(message):
                         st.image(image_path)
     else:
         st.markdown(message["content"])
+
+
+def prepare_messages(thread_messages, mode):
+    messages = []
+
+    # Always add the system prompt based on the current mode
+    system_prompt = SYSTEM_PROMPTS.get(mode, "")
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+
+    # Add conversation history
+    for msg in thread_messages:
+        api_message = {"role": msg["role"]}
+
+        # Handle different content types
+        if isinstance(msg["content"], list):
+            api_content = []
+            for item in msg["content"]:
+                if item["type"] == "text":
+                    api_content.append({"type": "text", "text": item["text"]})
+                elif item["type"] == "image_url" and "filename" in item:
+                    image_path = str(IMAGE_DIR / item["filename"])
+                    if os.path.exists(image_path):
+                        with open(image_path, "rb") as img_file:
+                            image_bytes = img_file.read()
+                            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                        api_content.append({
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}
+                        })
+            api_message["content"] = api_content
+        else:
+            api_message["content"] = msg["content"]
+
+        messages.append(api_message)
+
+    return messages
+
 
 # Load existing threads
 st.session_state.threads = load_threads()
@@ -147,6 +205,24 @@ if text_files:
             st.session_state.files_content.append(
                 f"\nAttached binary file '{uploaded_file.name}':\n[Binary content encoded in base64]")
 
+# Ensure we have a current thread
+if st.session_state.current_thread_id is None:
+    st.session_state.current_thread_id = str(uuid.uuid4())
+    st.session_state.threads[st.session_state.current_thread_id] = {
+        "id": st.session_state.current_thread_id,
+        "last_updated": datetime.now().isoformat(),
+        "messages": []
+    }
+    save_thread(st.session_state.current_thread_id, [])
+
+avatars = {"user": "🧑‍⚕️", "assistant": "🤖"}
+
+# Display current thread messages
+current_thread = st.session_state.threads[st.session_state.current_thread_id]
+for message in current_thread["messages"]:
+    with st.chat_message(message["role"], avatar=avatars[message["role"]]):
+        display_message(message)
+
 # Process uploaded images
 image_data_list = []
 if image_files:
@@ -154,24 +230,6 @@ if image_files:
         image_filename = save_uploaded_image(image_file)
         image_path = str(IMAGE_DIR / image_filename)
         image_data_list.append({"filename": image_filename, "original_name": image_file.name})
-
-# Ensure we have a current thread
-if st.session_state.current_thread_id is None:
-    st.session_state.current_thread_id = str(uuid.uuid4())
-    st.session_state.threads[st.session_state.current_thread_id] = {
-        "id": st.session_state.current_thread_id,
-        "last_updated": datetime.now().isoformat(),
-        "messages": []}
-    save_thread(st.session_state.current_thread_id, [])
-
-avatars = {"user": "🧑‍⚕️",
-           "assistant": "🤖"}
-
-# Display current thread messages
-current_thread = st.session_state.threads[st.session_state.current_thread_id]
-for message in current_thread["messages"]:
-    with st.chat_message(message["role"], avatar=avatars[message["role"]]):
-        display_message(message)
 
 # Chat input
 if prompt := st.chat_input("What's on your mind ? 🤔"):
@@ -185,7 +243,7 @@ if prompt := st.chat_input("What's on your mind ? 🤔"):
 
     # Prepare message content for API and display
     if image_data_list:
-        api_message_content = [{"type": "text", "text": prompt}]  # Use original prompt here
+        api_message_content = [{"type": "text", "text": prompt}]
         display_message_content = [{"type": "text", "text": display_prompt}]
 
         for image_data in image_data_list:
@@ -196,57 +254,20 @@ if prompt := st.chat_input("What's on your mind ? 🤔"):
             api_message_content.append(image_content)
             display_message_content.append(image_content)
     else:
-        api_message_content = prompt  # Use original prompt here
+        api_message_content = prompt
         display_message_content = display_prompt
 
-    # Add user message to thread (without prefix)
+    # Add user message to thread
     current_thread["messages"].append({"role": "user", "content": api_message_content})
 
     # Display user message
     with st.chat_message("user", avatar="🧑‍⚕️"):
         display_message({"content": display_message_content})
 
-    # Prepare API request
-    messages = []
+    # Prepare API request using the new function
+    messages = prepare_messages(current_thread["messages"], mode)
 
-    # Add mode prefix as a system message if needed
-    if not current_thread["messages"][:-1] and mode == "Data Scientist":
-        mode_prefix = """<SYSTEM PROMPT>
-            You are an expert in Python development, including its core libraries, popular frameworks like Flask, Streamlit and FastAPI, data science libraries such as NumPy and Pandas, and testing frameworks like pytest. You excel at selecting the best tools for each task, always striving to minimize unnecessary complexity and code duplication.
-            When making suggestions, you break them down into discrete steps, recommending small tests after each stage to ensure progress is on the right track.
-            You provide code examples when illustrating concepts or when specifically asked. However, if you can answer without code, that is preferred. You're open to elaborating if requested.
-            Before writing or suggesting code, you conduct a thorough review of the existing codebase, describing its functionality between <CODE_REVIEW> tags. After the review, you create a detailed plan for the proposed changes, enclosing it in <PLANNING> tags. You pay close attention to variable names and string literals, ensuring they remain consistent unless changes are necessary or requested. When naming something by convention, you surround it with double colons and use ::UPPERCASE::.
-            Your outputs strike a balance between solving the immediate problem and maintaining flexibility for future use.
-            You always seek clarification if anything is unclear or ambiguous. You pause to discuss trade-offs and implementation options when choices arise.
-            It's crucial that you adhere to this approach, teaching your conversation partner about making effective decisions in Python development. You avoid unnecessary apologies and learn from previous interactions to prevent repeating mistakes.
-            You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
-            Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process.
-            <END OF SYSTEM PROMPT>"""
-        messages.append({"role": "system", "content": mode_prefix})
-
-    # Add conversation history
-    for msg in current_thread["messages"]:
-        api_message = {"role": msg["role"]}
-
-        # Handle different content types
-        if isinstance(msg["content"], list):
-            api_content = []
-            for item in msg["content"]:
-                if item["type"] == "text":
-                    api_content.append({"type": "text", "text": item["text"]})
-                elif item["type"] == "image_url" and "filename" in item:
-                    image_path = str(IMAGE_DIR / item["filename"])
-                    if os.path.exists(image_path):
-                        with open(image_path, "rb") as img_file:
-                            image_bytes = img_file.read()
-                            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-                        api_content.append({"type": "image_url",
-                                            "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}})
-            api_message["content"] = api_content
-        else:
-            api_message["content"] = msg["content"]
-
-        messages.append(api_message)
+    st.markdown(messages)
 
     # Get and display assistant response
     with st.chat_message("assistant", avatar="🤖"):
