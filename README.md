@@ -64,10 +64,10 @@ You can also build and run the application using Docker. Follow these steps:
 
 ## Features
 
-- **File Upload**: You can upload text files and images to use in conversations.
+- **File Upload**: You can upload text, pdf files and images to use in conversations.
 - **Conversation History**: The app saves and loads previous conversations.
 - **Thread Management**: You can create new conversation threads and navigate through existing ones.
 
 ## Contributing
 
-Contributions are welcome! Please submit a pull request or open an issue to discuss any changes you'd like to make.
+Contributions are welcome ! Please submit a pull request or open an issue to discuss any changes you'd like to make.

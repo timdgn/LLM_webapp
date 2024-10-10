@@ -237,6 +237,12 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
             st.rerun()
         display_thread_history(threads)
 
+        st.divider()
+
+        st.caption(f'By Timmothy Dangeon, PharmD & Healthcare Machine Learning Engineer')
+        st.caption(f'Linkedin : linkedin.com/in/timdangeon')
+        st.caption(f'Github : github.com/timdgn')
+
     return mode, threads, uploaded_files
 
 
@@ -462,7 +468,7 @@ def initialize_session_state(model: str):
 
 def main():
     """Main function to run the Streamlit app."""
-    st.set_page_config(page_title="Tim LLM", page_icon="✨")
+    st.set_page_config(page_title="LLM Chat", page_icon="✨")
     api_key = st.secrets["openai_api_key"]
     model = "gpt-4o-mini"
 
