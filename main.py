@@ -203,7 +203,7 @@ def prepare_messages(thread_messages: List[Dict[str, Any]], mode: str) -> List[D
     return messages
 
 
-def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]]]:
+def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], list]:
     """
     Set up the sidebar interface.
 
@@ -211,23 +211,33 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
         threads (Dict[str, Dict[str, Any]]): The current threads dictionary
 
     Returns:
-        Tuple[str, Dict[str, Dict[str, Any]]]: The selected mode and updated threads
+        Tuple[str, Dict[str, Dict[str, Any]], list]: The selected mode, updated threads dictionary and uploaded files
     """
     with st.sidebar:
-        mode = st.radio("Choose a mode:", ("Default", "Data Scientist"), index=0)
+
+        st.title("⚙️ Choose a mode")
+        mode = st.radio("Mode", ("Default", "Data Scientist"), index=0, label_visibility="collapsed")
 
         st.divider()
-        st.title("Thread history")
 
+        st.title("📄🌆 Upload text, pdf or image files")
+        uploaded_files = st.file_uploader("Upload files",
+                                          type=None,
+                                          accept_multiple_files=True,
+                                          key=st.session_state.file_uploader_key,
+                                          label_visibility="collapsed")
+
+        st.divider()
+
+        st.title("⏳ Thread history")
         if st.button("New Thread"):
             thread_id, thread_data = create_new_thread()
             threads[thread_id] = thread_data
             st.session_state.current_thread_id = thread_id
             st.rerun()
-
         display_thread_history(threads)
 
-    return mode, threads
+    return mode, threads, uploaded_files
 
 
 def display_thread_history(threads: Dict[str, Dict[str, Any]]):
@@ -237,7 +247,6 @@ def display_thread_history(threads: Dict[str, Dict[str, Any]]):
     Args:
         threads (Dict[str, Dict[str, Any]]): The threads to display
     """
-    st.subheader("Previous Threads")
     for thread_id, thread_data in sorted(
             threads.items(),
             key=lambda x: x[1]["last_updated"],
@@ -410,6 +419,9 @@ def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mo
         mode (str): The current chat mode
     """
     if prompt := st.chat_input("What's on your mind ? 🤔"):
+
+        st.session_state["file_uploader_key"] += 1  # To remove the files items after rerun
+
         display_prompt, image_data_list = process_files(prompt, uploaded_files)
         message_content = create_message_content(display_prompt, image_data_list)
 
@@ -430,6 +442,7 @@ def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mo
         thread["messages"].append({"role": "assistant", "content": response})
         thread["last_updated"] = datetime.now().isoformat()
         save_thread(thread["id"], thread["messages"])
+        st.rerun()  # Rerun to remove the files items
 
 
 def initialize_session_state(model: str):
@@ -443,6 +456,8 @@ def initialize_session_state(model: str):
         st.session_state.current_thread_id = None
     if "openai_model" not in st.session_state:
         st.session_state.openai_model = model
+    if "file_uploader_key" not in st.session_state:
+        st.session_state["file_uploader_key"] = 0  # To remove the files items after rerun
 
 
 def main():
@@ -457,11 +472,9 @@ def main():
     client = OpenAI(api_key=api_key)
     threads = load_threads()
 
-    mode, threads = setup_sidebar(threads)
+    mode, threads, uploaded_files = setup_sidebar(threads)
 
     st.title(f"🤖 {model}")
-
-    uploaded_files = st.file_uploader("📄🌆 Choose text, pdf or image files", type=None, accept_multiple_files=True)
 
     if st.session_state.current_thread_id is None:
         thread_id, thread_data = create_new_thread()
