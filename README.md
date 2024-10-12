@@ -1,6 +1,7 @@
 # LLM_webapp
 
-LLM_webapp is a Streamlit application using the OpenAI API to create and manage conversations with a LLM.
+LLM_webapp is a Streamlit application using the OpenAI API to create and manage conversations with a LLM.  
+It can also generate images using the DALL-E API. 
 
 <img src="docs/Preview.png" width=75%>
 
@@ -67,6 +68,11 @@ You can also build and run the application using Docker. Follow these steps:
 - **File Upload**: You can upload text, pdf files and images to use in conversations.
 - **Conversation History**: The app saves and loads previous conversations.
 - **Thread Management**: You can create new conversation threads and navigate through existing ones.
+- **Image Generation**: You can generate images with the DALL-E API.
+
+## Next features
+- **DALL-E Options**: You can choose the size, quality and number of generated images.
+- **Image Generation History**: The app saves and loads previous image generations, along with its prompt.
 
 ## Contributing
 
