@@ -243,6 +243,10 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
                 dalle_options['quality'] = st.selectbox("Image Quality", ["Standard", "HD"], index=0).lower()
                 dalle_options['n'] = st.slider("Number of Images", min_value=1, max_value=4, value=1)
 
+                st.title("🎨 Image Generation History")
+                generations = load_image_generations()
+                display_image_generation_history(generations)
+
         with st.container(border=True):
             st.caption(f'By Timmothy Dangeon, PharmD & Healthcare Machine Learning Engineer')
             st.caption(f'Linkedin : linkedin.com/in/timdangeon')
@@ -495,6 +499,62 @@ def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
         st.error(f"Error generating images: {str(e)}")
 
 
+def save_image_generation(prompt: str, image_urls: List[str]) -> None:
+    """
+    Save an image generation to the history.
+
+    Args:
+        prompt (str): The prompt used for generation
+        image_urls (List[str]): List of generated image URLs
+    """
+    IMAGE_HISTORY_DIR.mkdir(exist_ok=True)
+    generation_id = str(uuid.uuid4())
+    generation_data = {
+        "id": generation_id,
+        "prompt": prompt,
+        "image_urls": image_urls,
+        "timestamp": datetime.now().isoformat()
+    }
+    file_path = IMAGE_HISTORY_DIR / f"{generation_id}.json"
+    with open(str(file_path), 'w') as f:
+        json.dump(generation_data, f)
+
+
+def load_image_generations() -> List[Dict[str, Any]]:
+    """
+    Load all image generations from the history directory.
+
+    Returns:
+        List[Dict[str, Any]]: A list of image generation data
+    """
+    generations = []
+    for file_path in IMAGE_HISTORY_DIR.glob("*.json"):
+        with open(str(file_path), 'r') as f:
+            generation_data = json.load(f)
+            generations.append(generation_data)
+    return sorted(generations, key=lambda x: x["timestamp"], reverse=True)
+
+
+def display_image_generation_history(generations: List[Dict[str, Any]]):
+    """
+    Display the image generation history in the sidebar.
+
+    Args:
+        generations (List[Dict[str, Any]]): The generations to display
+    """
+    for generation in generations:
+        timestamp = datetime.fromisoformat(generation["timestamp"]).strftime("%Y-%m-%d %H:%M")
+        preview = generation["prompt"][:30] + "..."
+
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            with st.expander(f"{timestamp}: {preview}", expanded=False):
+                st.write(generation["prompt"])
+                st.image(generation["image_urls"], use_column_width=True)
+        with col2:
+            st.image(generation["image_urls"][0], width=50)
+
+
 def main():
     """Main function to run the Streamlit app."""
     st.set_page_config(page_title="LLM Chat", page_icon="✨")
@@ -519,7 +579,6 @@ def main():
 
         current_thread = threads[st.session_state.current_thread_id]
 
-
         # Display current thread messages
         for message in current_thread["messages"]:
             with st.chat_message(message["role"], avatar=AVATARS[message["role"]]):
@@ -531,14 +590,17 @@ def main():
     elif interaction_type == INTERACTION_TYPES["image"]:
         st.title(f"🎨 {interaction_type}")
 
-        st.session_state.prompt = st.text_area("What do you want to create ?", height=150)
+        st.session_state.prompt = st.text_area("What do you want to create?", height=150, key="new_prompt")
+
         if st.button("Let's go ✨") and st.session_state.prompt:
             with st.spinner("Generating ..."):
                 generate_images(client, dalle_options)
+            if "image_urls" in st.session_state:
+                save_image_generation(st.session_state.prompt, st.session_state.image_urls)
+
         if "image_urls" in st.session_state:
-            st.write("#")
-            st.image(st.session_state.image_urls,
-                     width=250)
+            st.markdown("###")
+            st.image(st.session_state.image_urls, width=300)
 
 
 if __name__ == "__main__":
