@@ -5,47 +5,21 @@ import json
 import os
 from datetime import datetime
 import uuid
-from pathlib import Path
 import hashlib
 from PIL import Image
 import io
 from typing import Dict, List, Union, Any, Tuple
 import fitz
 
-# Constants
+from constants import *
+
+
+INTERACTION_TYPES = {'chat': 'ChatGPT',
+                     'image': 'DALL-E (Image Generation)'}
 HISTORY_DIR = Path("thread_history")
 IMAGE_DIR = Path("uploaded_images")
+IMAGE_HISTORY_DIR = Path("generated_images")
 AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
-
-# System prompts
-SYSTEM_PROMPTS = {
-    "Default": "",
-    "Data Scientist": """<SYSTEM PROMPT>
-        You are an expert in Python development, including its core libraries, popular frameworks like Flask, Streamlit and FastAPI, data science libraries such as NumPy and Pandas, and testing frameworks like pytest. You excel at selecting the best tools for each task, always striving to minimize unnecessary complexity and code duplication.
-        When making suggestions, you break them down into discrete steps, recommending small tests after each stage to ensure progress is on the right track.
-        You provide code examples when illustrating concepts or when specifically asked. However, if you can answer without code, that is preferred. You're open to elaborating if requested.
-        Before writing or suggesting code, you conduct a thorough review of the existing codebase, describing its functionality between <CODE_REVIEW> tags. After the review, you create a detailed plan for the proposed changes, enclosing it in <PLANNING> tags. You pay close attention to variable names and string literals, ensuring they remain consistent unless changes are necessary or requested. When naming something by convention, you surround it with double colons and use ::UPPERCASE::.
-        Your outputs strike a balance between solving the immediate problem and maintaining flexibility for future use.
-        You always seek clarification if anything is unclear or ambiguous. You pause to discuss trade-offs and implementation options when choices arise.
-        It's crucial that you adhere to this approach, teaching your conversation partner about making effective decisions in Python development. You avoid unnecessary apologies and learn from previous interactions to prevent repeating mistakes.
-        You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
-        Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process. Answer in the language of the following user prompt.
-        <END OF SYSTEM PROMPT>""",
-    "Image Generator": """<SYSTEM PROMPT>
-        Stable Diffusion is an AI art generation model similar to DALLE-2.
-        Below is a list of prompts that can be used to generate images with Stable Diffusion:
-        - portait of a homer simpson archer shooting arrow at forest monster, front game card, drark, marvel comics, dark, intricate, highly detailed, smooth, artstation, digital illustration by ruan jia and mandy jurgens and artgerm and wayne barlowe and greg rutkowski and zdislav beksinski
-        - pirate, concept art, deep focus, fantasy, intricate, highly detailed, digital painting, artstation, matte, sharp focus, illustration, art by magali villeneuve, chippy, ryan yee, rk post, clint cearley, daniel ljunggren, zoltan boros, gabor szikszai, howard lyon, steve argyle, winona nelson
-        - ghost inside a hunted room, art by lois van baarle and loish and ross tran and rossdraws and sam yang and samdoesarts and artgerm, digital art, highly detailed, intricate, sharp focus, Trending on Artstation HQ, deviantart, unreal engine 5, 4K UHD image
-        - red dead redemption 2, cinematic view, epic sky, detailed, concept art, low angle, high detail, warm lighting, volumetric, godrays, vivid, beautiful, trending on artstation, by jordan grimmer, huge scene, grass, art greg rutkowski
-        - a fantasy style portrait painting of rachel lane / alison brie hybrid in the style of francois boucher oil painting unreal 5 daz. rpg portrait, extremely detailed artgerm greg rutkowski alphonse mucha greg hildebrandt tim hildebrandt
-        - athena, greek goddess, claudia black, art by artgerm and greg rutkowski and magali villeneuve, bronze greek armor, owl crown, d & d, fantasy, intricate, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration
-        - closeup portrait shot of a large strong female biomechanic woman in a scenic scifi environment, intricate, elegant, highly detailed, centered, digital painting, artstation, concept art, smooth, sharp focus, warframe, illustration, thomas kinkade, tomasz alen kopera, peter mohrbacher, donato giancola, leyendecker, boris vallejo
-        - ultra realistic illustration of steve urkle as the hulk, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski and alphonse mucha
-        I want you to write me a list of detailed prompts. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
-        Here is the idea you have to work on:
-        </END OF SYSTEM PROMPT>"""}
-
 
 def init_directories():
     """Initialize necessary directories for storing thread history and images."""
@@ -217,7 +191,7 @@ def prepare_messages(thread_messages: List[Dict[str, Any]], mode: str) -> List[D
     return messages
 
 
-def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], list, str]:
+def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], list, str, Dict[str, Any]]:
     """
     Set up the sidebar interface.
 
@@ -225,16 +199,20 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
         threads (Dict[str, Dict[str, Any]]): The current threads dictionary
 
     Returns:
-        Tuple[str, Dict[str, Dict[str, Any]], list, str]: The selected mode, updated threads dictionary, uploaded files, and selected tab
+        Tuple[str, Dict[str, Dict[str, Any]], list, str, Dict[str, Any]]:
+        The selected mode, updated threads dictionary, uploaded files, selected tab, and DALL-E options
     """
     with st.sidebar:
         st.title("📝 Choose interaction type")
-        interaction_type = st.radio("Interaction Type", ("ChatGPT", "DALL-E (Image Generation)"), index=0)
+        interaction_type = st.radio("Interaction Type", list(INTERACTION_TYPES.values()), index=0)
 
         mode = list(SYSTEM_PROMPTS.keys())[0]
         uploaded_files = None
+        dalle_options = {"size": "1024x1024",
+                         "quality": "standard",
+                         "n": 1}
 
-        if interaction_type == "ChatGPT":
+        if interaction_type == INTERACTION_TYPES["chat"]:
             with st.container(border=True):
                 st.title("⚙️ Choose a mode")
                 mode = st.radio("Mode", list(SYSTEM_PROMPTS.keys()), index=0, label_visibility="collapsed")
@@ -258,12 +236,19 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
                     st.rerun()
                 display_thread_history(threads)
 
+        elif interaction_type == INTERACTION_TYPES["image"]:
+            with st.container(border=True):
+                st.title("🖼️ DALL-E Options")
+                dalle_options['size'] = st.selectbox("Image Size", ["1024x1024"], index=0)
+                dalle_options['quality'] = st.selectbox("Image Quality", ["Standard", "HD"], index=0).lower()
+                dalle_options['n'] = st.slider("Number of Images", min_value=1, max_value=4, value=1)
+
         with st.container(border=True):
             st.caption(f'By Timmothy Dangeon, PharmD & Healthcare Machine Learning Engineer')
             st.caption(f'Linkedin : linkedin.com/in/timdangeon')
             st.caption(f'Github : github.com/timdgn')
 
-    return mode, threads, uploaded_files, interaction_type
+    return mode, threads, uploaded_files, interaction_type, dalle_options
 
 
 def display_thread_history(threads: Dict[str, Dict[str, Any]]):
@@ -486,31 +471,28 @@ def initialize_session_state(model: str):
         st.session_state["file_uploader_key"] = 0  # To remove the files items after rerun
 
 
-def generate_image(client: OpenAI, prompt: str):
+def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
     """
-    Generate an image using DALL-E.
+    Generate images using DALL-E.
 
     Args:
         client (OpenAI): The OpenAI client
         prompt (str): The prompt for image generation
+        dalle_options (Dict[str, Any]): Options for DALL-E image generation
 
     Returns:
-        str: The URL of the generated image
+
     """
     try:
-        # Use the correct API call to generate an image
-        response = client.images.generate(model='dall-e-3',
-                                          prompt=prompt,
-                                          size="1024x1024",
-                                          quality='hd',
-                                          n=1)
-
-        # Access the image URL based on the expected response format
-        image_url = response.data[0].url  # Adjusting based on the correct attribute access
-        return image_url
+        image_urls = []
+        for _ in range(dalle_options['n']):
+            response = client.images.generate(prompt=st.session_state.prompt,
+                                              quality=dalle_options['quality'])
+            image_urls.append(response.data[0].url)
+        st.session_state["image_urls"] = image_urls
 
     except Exception as e:
-        st.error(f"Error generating image: {str(e)}")
+        st.error(f"Error generating images: {str(e)}")
 
 
 def main():
@@ -525,9 +507,9 @@ def main():
     client = OpenAI(api_key=api_key)
     threads = load_threads()
 
-    mode, threads, uploaded_files, interaction_type = setup_sidebar(threads)
+    mode, threads, uploaded_files, interaction_type, dalle_options = setup_sidebar(threads)
 
-    if interaction_type == "ChatGPT":
+    if interaction_type == INTERACTION_TYPES["chat"]:
         st.title(f"🤖 {interaction_type}")
 
         if st.session_state.current_thread_id is None:
@@ -537,6 +519,7 @@ def main():
 
         current_thread = threads[st.session_state.current_thread_id]
 
+
         # Display current thread messages
         for message in current_thread["messages"]:
             with st.chat_message(message["role"], avatar=AVATARS[message["role"]]):
@@ -545,14 +528,17 @@ def main():
         # Handle chat input
         handle_chat_input(client, current_thread, uploaded_files, mode)
 
-    elif interaction_type == "DALL-E (Image Generation)":
+    elif interaction_type == INTERACTION_TYPES["image"]:
         st.title(f"🎨 {interaction_type}")
 
-        prompt = st.text_input("What do you want to create ?")
-        if st.button("Create my image ✨") and prompt:
-            with st.spinner("Generating image..."):
-                image_url = generate_image(client, prompt)
-            st.image(image_url, caption="Here is your generated image !", use_column_width=True)
+        st.session_state.prompt = st.text_area("What do you want to create ?", height=150)
+        if st.button("Let's go ✨") and st.session_state.prompt:
+            with st.spinner("Generating ..."):
+                generate_images(client, dalle_options)
+        if "image_urls" in st.session_state:
+            st.write("#")
+            st.image(st.session_state.image_urls,
+                     width=250)
 
 
 if __name__ == "__main__":
