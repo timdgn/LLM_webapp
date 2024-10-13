@@ -1,6 +1,13 @@
 from pathlib import Path
 
 
+INTERACTION_TYPES = {'chat': 'ChatGPT',
+                     'image': 'DALL-E (Image Generation)'}
+THREADS_DIR = Path("data/thread_history")
+UPLOADED_IMAGES_DIR = Path("data/uploaded_images")
+GENERATED_IMAGES_DIR = Path("data/generated_images")
+AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
+
 SYSTEM_PROMPTS = {
     "Default": "",
     "Data Scientist": """<SYSTEM PROMPT>

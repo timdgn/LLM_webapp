@@ -14,17 +14,10 @@ import fitz
 from constants import *
 
 
-INTERACTION_TYPES = {'chat': 'ChatGPT',
-                     'image': 'DALL-E (Image Generation)'}
-HISTORY_DIR = Path("thread_history")
-IMAGE_DIR = Path("uploaded_images")
-IMAGE_HISTORY_DIR = Path("generated_images")
-AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
-
 def init_directories():
     """Initialize necessary directories for storing thread history and images."""
-    HISTORY_DIR.mkdir(exist_ok=True)
-    IMAGE_DIR.mkdir(exist_ok=True)
+    THREADS_DIR.mkdir(exist_ok=True)
+    UPLOADED_IMAGES_DIR.mkdir(exist_ok=True)
 
 
 def load_threads() -> Dict[str, Dict[str, Any]]:
@@ -35,7 +28,7 @@ def load_threads() -> Dict[str, Dict[str, Any]]:
         Dict[str, Dict[str, Any]]: A dictionary of thread IDs to thread data
     """
     threads = {}
-    for file_path in HISTORY_DIR.glob("*.json"):
+    for file_path in THREADS_DIR.glob("*.json"):
         with open(str(file_path), 'r') as f:
             thread_data = json.load(f)
             threads[thread_data["id"]] = thread_data
@@ -55,7 +48,7 @@ def save_thread(thread_id: str, messages: List[Dict[str, Any]]) -> None:
         "last_updated": datetime.now().isoformat(),
         "messages": messages
     }
-    file_path = HISTORY_DIR / f"{thread_id}.json"
+    file_path = THREADS_DIR / f"{thread_id}.json"
     with open(str(file_path), 'w') as f:
         json.dump(thread_data, f)
 
@@ -90,7 +83,7 @@ def delete_thread(thread_id: str, threads: Dict[str, Dict[str, Any]]) -> Dict[st
     """
     if thread_id in threads:
         del threads[thread_id]
-        file_path = HISTORY_DIR / f"{thread_id}.json"
+        file_path = THREADS_DIR / f"{thread_id}.json"
         if os.path.exists(str(file_path)):
             os.remove(str(file_path))
     return threads
@@ -110,7 +103,7 @@ def save_uploaded_image(image_file) -> str:
     image_hash = hashlib.md5(image_bytes).hexdigest()
     image_ext = image_file.type.split('/')[-1]
     image_filename = f"{image_hash}.{image_ext}"
-    image_path = IMAGE_DIR / image_filename
+    image_path = UPLOADED_IMAGES_DIR / image_filename
 
     if not image_path.exists():
         Image.open(io.BytesIO(image_bytes)).save(str(image_path))
@@ -130,7 +123,7 @@ def display_message(message: Dict[str, Any]):
             if content["type"] == "text":
                 st.markdown(content["text"])
             elif content["type"] == "image_url" and "filename" in content:
-                image_path = str(IMAGE_DIR / content["filename"])
+                image_path = str(UPLOADED_IMAGES_DIR / content["filename"])
                 if os.path.exists(image_path):
                     st.image(image_path)
     else:
@@ -155,7 +148,7 @@ def prepare_message_content(content: Union[str, List[Dict[str, Any]]]) -> Union[
         if item["type"] == "text":
             api_content.append({"type": "text", "text": item["text"]})
         elif item["type"] == "image_url" and "filename" in item:
-            image_path = str(IMAGE_DIR / item["filename"])
+            image_path = str(UPLOADED_IMAGES_DIR / item["filename"])
             if os.path.exists(image_path):
                 with open(image_path, "rb") as img_file:
                     image_bytes = img_file.read()
@@ -507,7 +500,7 @@ def save_image_generation(prompt: str, image_urls: List[str]) -> None:
         prompt (str): The prompt used for generation
         image_urls (List[str]): List of generated image URLs
     """
-    IMAGE_HISTORY_DIR.mkdir(exist_ok=True)
+    GENERATED_IMAGES_DIR.mkdir(exist_ok=True)
     generation_id = str(uuid.uuid4())
     generation_data = {
         "id": generation_id,
@@ -515,7 +508,7 @@ def save_image_generation(prompt: str, image_urls: List[str]) -> None:
         "image_urls": image_urls,
         "timestamp": datetime.now().isoformat()
     }
-    file_path = IMAGE_HISTORY_DIR / f"{generation_id}.json"
+    file_path = GENERATED_IMAGES_DIR / f"{generation_id}.json"
     with open(str(file_path), 'w') as f:
         json.dump(generation_data, f)
 
@@ -528,7 +521,7 @@ def load_image_generations() -> List[Dict[str, Any]]:
         List[Dict[str, Any]]: A list of image generation data
     """
     generations = []
-    for file_path in IMAGE_HISTORY_DIR.glob("*.json"):
+    for file_path in GENERATED_IMAGES_DIR.glob("*.json"):
         with open(str(file_path), 'r') as f:
             generation_data = json.load(f)
             generations.append(generation_data)
