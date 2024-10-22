@@ -10,6 +10,7 @@ import io
 from typing import Dict, List, Union, Any, Tuple
 import fitz
 from glob import glob
+import shutil
 
 from constants import *
 
@@ -73,7 +74,7 @@ def create_new_thread() -> Tuple[str, Dict[str, Any]]:
 
 def delete_thread(thread_id: str, threads: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
-    Delete a conversation thread.
+    Delete a conversation thread and its associated files.
 
     Args:
         thread_id (str): The ID of the thread to delete
@@ -83,19 +84,35 @@ def delete_thread(thread_id: str, threads: Dict[str, Dict[str, Any]]) -> Dict[st
         Dict[str, Dict[str, Any]]: The updated threads dictionary
     """
     if thread_id in threads:
+        thread_data = threads[thread_id]
+        
+        # Delete associated files
+        for message in thread_data["messages"]:
+            if isinstance(message["content"], list):
+                for content in message["content"]:
+                    if content["type"] == "image_url" and "filename" in content:
+                        image_path = os.path.join(UPLOADED_IMAGES_DIR, content["filename"])
+                        if os.path.exists(image_path):
+                            os.remove(image_path)
+
+        # Delete the thread data
         del threads[thread_id]
+        
+        # Delete the thread JSON file
         file_path = os.path.join(THREADS_DIR, f"{thread_id}.json")
         if os.path.exists(file_path):
             os.remove(file_path)
+
     return threads
 
 
-def save_uploaded_image(image_file) -> str:
+def save_uploaded_image(image_file, thread_id: str) -> str:
     """
     Save an uploaded image and return its filename.
 
     Args:
         image_file: The uploaded image file
+        thread_id (str): The ID of the current thread
 
     Returns:
         str: The filename of the saved image
@@ -103,7 +120,7 @@ def save_uploaded_image(image_file) -> str:
     image_bytes = image_file.getvalue()
     image_hash = hashlib.md5(image_bytes).hexdigest()
     image_ext = image_file.type.split('/')[-1]
-    image_filename = f"{image_hash}.{image_ext}"
+    image_filename = f"{thread_id}_{image_hash}.{image_ext}"
     image_path = os.path.join(UPLOADED_IMAGES_DIR, image_filename)
 
     if not os.path.exists(image_path):
@@ -304,13 +321,14 @@ def get_thread_preview(thread_data: Dict[str, Any]) -> str:
     return "Image thread"
 
 
-def process_files(prompt: str, uploaded_files) -> Tuple[str, List[Dict[str, str]]]:
+def process_files(prompt: str, uploaded_files, thread_id: str) -> Tuple[str, List[Dict[str, str]]]:
     """
     Process uploaded files of all types.
 
     Args:
         prompt (str): The user's prompt
         uploaded_files: Uploaded files of any type
+        thread_id (str): The ID of the current thread
 
     Returns:
         Tuple[str, List[Dict[str, str]]]: The processed prompt and image data
@@ -330,7 +348,7 @@ def process_files(prompt: str, uploaded_files) -> Tuple[str, List[Dict[str, str]
 
         elif uploaded_file.type.startswith("image/"):
             # Process image files
-            image_filename = save_uploaded_image(uploaded_file)
+            image_filename = save_uploaded_image(uploaded_file, thread_id)
             image_data_list.append({
                 "filename": image_filename,
                 "original_name": uploaded_file.name})
@@ -431,7 +449,7 @@ def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mo
 
         st.session_state["file_uploader_key"] += 1  # To remove the files items after rerun
 
-        display_prompt, image_data_list = process_files(prompt, uploaded_files)
+        display_prompt, image_data_list = process_files(prompt, uploaded_files, thread["id"])
         message_content = create_message_content(display_prompt, image_data_list)
 
         thread["messages"].append({"role": "user", "content": message_content})
