@@ -10,7 +10,6 @@ import io
 from typing import Dict, List, Union, Any, Tuple
 import fitz
 from glob import glob
-import shutil
 
 from constants import *
 
@@ -547,6 +546,18 @@ def load_image_generations() -> List[Dict[str, Any]]:
     return sorted(generations, key=lambda x: x["timestamp"], reverse=True)
 
 
+def delete_image_generation(generation_id: str) -> None:
+    """
+    Delete an image generation from the history.
+
+    Args:
+        generation_id (str): The ID of the generation to delete
+    """
+    file_path = os.path.join(GENERATED_IMAGES_DIR, f"{generation_id}.json")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+
 def display_image_generation_history(generations: List[Dict[str, Any]]):
     """
     Display the image generation history in the sidebar.
@@ -558,13 +569,17 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
         timestamp = datetime.fromisoformat(generation["timestamp"]).strftime("%Y-%m-%d %H:%M")
         preview = generation["prompt"][:30] + "..."
 
-        col1, col2 = st.columns([3, 1])
+        col1, col2, col3 = st.columns([3, 1, 0.5])
         with col1:
             with st.expander(f"{timestamp}: {preview}", expanded=False):
                 st.write(generation["prompt"])
                 st.image(generation["image_urls"], use_column_width=True)
         with col2:
             st.image(generation["image_urls"][0], width=50)
+        with col3:
+            if st.button("❌", key=f"delete_{generation['id']}"):
+                delete_image_generation(generation['id'])
+                st.rerun()
 
 
 def main():
@@ -609,6 +624,7 @@ def main():
                 generate_images(client, dalle_options)
             if "image_urls" in st.session_state:
                 save_image_generation(st.session_state.prompt, st.session_state.image_urls)
+                st.rerun()  # Rerun to update the history immediately
 
         if "image_urls" in st.session_state:
             st.markdown("###")
