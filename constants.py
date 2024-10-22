@@ -1,11 +1,14 @@
-from pathlib import Path
+import os
 
+
+PROJECT_DIR = os.path.dirname(__file__)
+THREADS_DIR = os.path.join(PROJECT_DIR, "data", "thread_history")
+UPLOADED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "uploaded_images")
+GENERATED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "generated_images")
 
 INTERACTION_TYPES = {'chat': 'ChatGPT',
                      'image': 'DALL-E (Image Generation)'}
-THREADS_DIR = Path("data/thread_history")
-UPLOADED_IMAGES_DIR = Path("data/uploaded_images")
-GENERATED_IMAGES_DIR = Path("data/generated_images")
+
 AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
 
 SYSTEM_PROMPTS = {

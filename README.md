@@ -10,8 +10,7 @@ It can also generate images using the OpenAI DALL-E API.
 
 Before starting, make sure you have installed the following dependencies:
 
-- Python 3.8 or higher
-- The libraries listed in `requirements.txt`
+- Python 3.8.19 or higher
 
 ## Installation
 

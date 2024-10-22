@@ -2,7 +2,6 @@ from openai import OpenAI
 import streamlit as st
 import base64
 import json
-import os
 from datetime import datetime
 import uuid
 import hashlib
@@ -10,14 +9,16 @@ from PIL import Image
 import io
 from typing import Dict, List, Union, Any, Tuple
 import fitz
+from glob import glob
 
 from constants import *
 
 
 def init_directories():
     """Initialize necessary directories for storing thread history and images."""
-    THREADS_DIR.mkdir(exist_ok=True)
-    UPLOADED_IMAGES_DIR.mkdir(exist_ok=True)
+    os.makedirs(THREADS_DIR, exist_ok=True)
+    os.makedirs(UPLOADED_IMAGES_DIR, exist_ok=True)
+    os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
 
 
 def load_threads() -> Dict[str, Dict[str, Any]]:
@@ -28,8 +29,8 @@ def load_threads() -> Dict[str, Dict[str, Any]]:
         Dict[str, Dict[str, Any]]: A dictionary of thread IDs to thread data
     """
     threads = {}
-    for file_path in THREADS_DIR.glob("*.json"):
-        with open(str(file_path), 'r') as f:
+    for file_path in glob(os.path.join(THREADS_DIR, "*.json")):
+        with open(file_path, 'r') as f:
             thread_data = json.load(f)
             threads[thread_data["id"]] = thread_data
     return threads
@@ -48,8 +49,8 @@ def save_thread(thread_id: str, messages: List[Dict[str, Any]]) -> None:
         "last_updated": datetime.now().isoformat(),
         "messages": messages
     }
-    file_path = THREADS_DIR / f"{thread_id}.json"
-    with open(str(file_path), 'w') as f:
+    file_path = os.path.join(THREADS_DIR, f"{thread_id}.json")
+    with open(file_path, 'w') as f:
         json.dump(thread_data, f)
 
 
@@ -83,9 +84,9 @@ def delete_thread(thread_id: str, threads: Dict[str, Dict[str, Any]]) -> Dict[st
     """
     if thread_id in threads:
         del threads[thread_id]
-        file_path = THREADS_DIR / f"{thread_id}.json"
-        if os.path.exists(str(file_path)):
-            os.remove(str(file_path))
+        file_path = os.path.join(THREADS_DIR, f"{thread_id}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)
     return threads
 
 
@@ -103,10 +104,10 @@ def save_uploaded_image(image_file) -> str:
     image_hash = hashlib.md5(image_bytes).hexdigest()
     image_ext = image_file.type.split('/')[-1]
     image_filename = f"{image_hash}.{image_ext}"
-    image_path = UPLOADED_IMAGES_DIR / image_filename
+    image_path = os.path.join(UPLOADED_IMAGES_DIR, image_filename)
 
-    if not image_path.exists():
-        Image.open(io.BytesIO(image_bytes)).save(str(image_path))
+    if not os.path.exists(image_path):
+        Image.open(io.BytesIO(image_bytes)).save(image_path)
 
     return image_filename
 
@@ -123,7 +124,7 @@ def display_message(message: Dict[str, Any]):
             if content["type"] == "text":
                 st.markdown(content["text"])
             elif content["type"] == "image_url" and "filename" in content:
-                image_path = str(UPLOADED_IMAGES_DIR / content["filename"])
+                image_path = os.path.join(UPLOADED_IMAGES_DIR, content["filename"])
                 if os.path.exists(image_path):
                     st.image(image_path)
     else:
@@ -148,7 +149,7 @@ def prepare_message_content(content: Union[str, List[Dict[str, Any]]]) -> Union[
         if item["type"] == "text":
             api_content.append({"type": "text", "text": item["text"]})
         elif item["type"] == "image_url" and "filename" in item:
-            image_path = str(UPLOADED_IMAGES_DIR / item["filename"])
+            image_path = os.path.join(UPLOADED_IMAGES_DIR, item["filename"])
             if os.path.exists(image_path):
                 with open(image_path, "rb") as img_file:
                     image_bytes = img_file.read()
@@ -500,7 +501,6 @@ def save_image_generation(prompt: str, image_urls: List[str]) -> None:
         prompt (str): The prompt used for generation
         image_urls (List[str]): List of generated image URLs
     """
-    GENERATED_IMAGES_DIR.mkdir(exist_ok=True)
     generation_id = str(uuid.uuid4())
     generation_data = {
         "id": generation_id,
@@ -508,8 +508,9 @@ def save_image_generation(prompt: str, image_urls: List[str]) -> None:
         "image_urls": image_urls,
         "timestamp": datetime.now().isoformat()
     }
-    file_path = GENERATED_IMAGES_DIR / f"{generation_id}.json"
-    with open(str(file_path), 'w') as f:
+    file_path = os.path.join(GENERATED_IMAGES_DIR, f"{generation_id}.json")
+
+    with open(file_path, 'w') as f:
         json.dump(generation_data, f)
 
 
@@ -521,8 +522,8 @@ def load_image_generations() -> List[Dict[str, Any]]:
         List[Dict[str, Any]]: A list of image generation data
     """
     generations = []
-    for file_path in GENERATED_IMAGES_DIR.glob("*.json"):
-        with open(str(file_path), 'r') as f:
+    for file_path in glob(os.path.join(GENERATED_IMAGES_DIR, "*.json")):
+        with open(file_path, 'r') as f:
             generation_data = json.load(f)
             generations.append(generation_data)
     return sorted(generations, key=lambda x: x["timestamp"], reverse=True)
