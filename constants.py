@@ -11,6 +11,55 @@ INTERACTION_TYPES = {'chat': 'ChatGPT',
 
 AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
 
+CATEGORIES = ["album cover", "anatomical drawing", "anatomy", "book cover", "business card", "brand identity", "calendar design", "character design",
+              "character design multiple poses", "character sheet", "chart design", "doll house", "color palette", "enamel pin", "comic strips", "coloring book page",
+              "encyclopedia page", "fashion moodboard", "flat lay photography", "flyer", "full body character design", "game assets", "game ui", "house cutaway",
+              "house plan", "icon set design", "ikea guide", "illustration split circle four seasons", "infographic", "interior design", "jewelry design", "knolling",
+              "logo design", "magazine cover", "menu design", "mobile app ui design", "packaging design", "outfit", "newsletter design", "nail art", "popup book",
+              "postage stamp", "poster", "propaganda poster", "sticker", "seamless pattern", "schematic diagram", "reference sheet", "story board", "wall painting",
+              "wedding invitation", "t shirt vector", "tarot card", "tattoo design", "anime character design", "website design", "illustrations", "coloring pages",
+              "watercolor", "watercolor animals", "nursery", "tshirt", "cute animals", "art", "animal", "botanical watercolor"]
+
+STYLES = ["3D", "Abstract Art", "Abstract Expressionism", "Analytical Cubism", "Art Brut", "Art Deco", "Art Nouveau", "Bayeux Tapestry", "Britpop", "Bronze Age",
+          "Cartographic Art", "Cartoon", "Childrens Book Illustration", "Color Field Painting", "Colorful Collages", "Comic", "Constructivism", "Coptic Art", "Cubism",
+          "Impressionism", "Abstract Illusion", "Action Painting", "Alebrijes", "Arte Povera", "Automatism", "Bauhaus", "Brutalism", "Bubble Goth", "Caricature",
+          "Cinematic", "Cloisonnism", "Collage Art", "Commercial Art", "Conceptual Art", "Concretism", "Surrealism", "Realism", "Expressionism"]
+
+LIGHTING = ["Backlighting", "Blacklight", "Blue Hour", "Bokeh", "Chemiluminescence", "Cinematic Lighting", "Crepuscular Rays", "Dappled Light", "Disco Lighting",
+            "Dramatic Lighting", "Dreamy Glow", "Dual Lighting", "Dusk", "Electroluminescent Wire", "Electromagnetic Spectrum", "Flare", "Floodlight",
+            "Flourescent Lightin", "Frontal Lighting", "Glitter", "Glow In The Dark", "Glowing", "Glowing Neon", "Glowing Partical Effects", "Glowing Radioactively",
+            "Gobo", "Golden Hour", "Hard Lighting", "High Key Lighting", "Internal Glow", "Laser", "Lava Glow", "Lens Flare", "Low Key Lighting", "Midnight",
+            "Moody Lighting", "Moonlight", "Neon Lights", "Nightclub Lighting", "Nuclear Wasted Glow", "Prismatic Highlights", "Radioluminescence", "Rainbow Sparks",
+            "Ray Tracing Reflections", "Shimmering Lights", "Soft Lighting", "Starry", "Sunlighting", "Sunlit", "Torchlit", "Twilight Hour"]
+
+ARTISTS = ["Adrian Donoghue", "Adrian Tomine", "Akihiko Yoshida", "Akira Toriyama", "Akos Major", "Alan Lee", "Albert Watson", "Alberto Seveso", "Alex Grey",
+           "Alex Timmermans", "Alphonse Mucha", "Andro Botticelli", "Anna Dittmann", "Anne Bachelier", "Antonio Mora", "Arshile Gorky", "Arthur Rackham",
+           "Atey Ghailan", "Aubrey Beardsley", "August Macke", "Basquiat", "Benoit Mandelbrot", "Bernie Fuchs", "Bernini", "Bill Mantlo", "Bob Eggleton", "Brian Bolland",
+           "Brian Froud", "Brian Kesinger", "Brothers Hildebrandt", "Bruce Pennington", "Butcher Billy", "Cai Guo Qiang", "Canaletto", "Caravaggio", "Charlie Bowater",
+           "Chiharu Shiota", "Cindy Sherman", "Claude Monet", "Coby Whitmore", "Conrad Roset", "Craig Mullins", "Daido Moriyama", "Dante Gabriel Rossetti", "David Hockney",
+           "Diego Rivera", "Donatello", "Dorothy Lathrop", "Drew Struzan", "El Anatsui", "El Lissitzky", "Ellen Jewett", "Enki Bilal", "Erte", "Escher", "Francisco De Goya",
+           "Francoise Nielly", "Frank Miller", "Frank Thorne", "Frida Kahlo", "Fullmetal Alchemist", "Georg Baselitz", "Georges De La Tou", "Picasso", "Van Gogh", "Da Vinci",
+           "Michelangelo", "Rembrandt"]
+
+CAMERA_ANGLES = ["360-degree camera", "100mm", "14mm", "16k", "24mm", "300mm", "32k", "35mm", "400mm", "4k", "500mm", "600mm", "85mm", "8k", "High contrast",
+                 "Holga camera", "Infrared photography", "Lenticular lens", "Light painting", "Minimalist style", "Motion blur", "Neon lighting", "Night vision",
+                 "Oblique angle", "Panoramic view", "Pixelated effect", "Polaroid camera", "Prism lens", "Refraction effect", "Retro style", "Split focus",
+                 "Stereoscopic 3D", "Time-lapse", "Underwater photography", "Vintage look", "Abstract perspective", "Black and white", "Bokeh effect", "Circular fisheye lens",
+                 "Double exposure", "Dutch angle", "Experimental photography", "Film noir style", "Ghostly blur", "Glitch art", "Aerial Photography", "Closeup",
+                 "Drone Photography", "Far Shot", "Focal Blur", "Full Body Shot", "Full Focus", "Headshot Photography", "High Angle Shot", "Long Exposure", "Low Angle Shot",
+                 "Macro Lens", "Medium Shot", "Out Of Focus", "Portrait Photography", "Selfie", "Short Exposure", "Telephoto Lens", "Tiltshift", "Top Down Shot",
+                 "Ultra Wide Angle", "Wide Angle"]
+
+COLORS = ["Red", "Blue", "Green", "Yellow", "Orange", "AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond",
+          "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue", "DarkBlue", "DarkCyan", "DarkGoldenRod",
+          "DarkGray", "DarkGrey", "DarkMagenta", "DarkOliveGreen", "DarkOrange", "DarkOrchid", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey",
+          "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "ForestGreen", "Fuchsia", "Gainsboro", "Cornsilk", "Crimson", "Cyan", "DarkGreen", "DarkKhaki",
+          "DarkRed", "DarkSalmon", "DarkTurquoise", "DarkViolet", "FireBrick", "FloralWhite"]
+
+
+TEXTURES = ["3d fractals", "anodized titanium", "brushed aluminum", "agate", "aluminum", "awning stripe", "ceramic", "amber", "basalt", "celtic knot", "anodized", "brass",
+            "bumpy", "chalk stripes", "ammolite", "breton stripes pattern", "candy stripes", "amigurumi", "brick", "chain pattern", "amethyst", "bronze", "chainmail"]
+
 SYSTEM_PROMPTS = {
     "Default": "",
     "Data Scientist": """<SYSTEM PROMPT>
@@ -24,17 +73,16 @@ SYSTEM_PROMPTS = {
         You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
         Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process. Answer in the language of the following user prompt.
         <END OF SYSTEM PROMPT>""",
-    "Image Generator": """<SYSTEM PROMPT>
+    "Image Generator": f"""<SYSTEM PROMPT>
         DALLE-3 is an AI art generation model.
-        Below is a list of prompts that can be used to generate images with DALLE-3:
-        - portait of a homer simpson archer shooting arrow at forest monster, front game card, drark, marvel comics, dark, intricate, highly detailed, smooth, artstation, digital illustration by ruan jia and mandy jurgens and artgerm and wayne barlowe and greg rutkowski and zdislav beksinski
-        - pirate, concept art, deep focus, fantasy, intricate, highly detailed, digital painting, artstation, matte, sharp focus, illustration, art by magali villeneuve, chippy, ryan yee, rk post, clint cearley, daniel ljunggren, zoltan boros, gabor szikszai, howard lyon, steve argyle, winona nelson
-        - ghost inside a hunted room, art by lois van baarle and loish and ross tran and rossdraws and sam yang and samdoesarts and artgerm, digital art, highly detailed, intricate, sharp focus, Trending on Artstation HQ, deviantart, unreal engine 5, 4K UHD image
-        - red dead redemption 2, cinematic view, epic sky, detailed, concept art, low angle, high detail, warm lighting, volumetric, godrays, vivid, beautiful, trending on artstation, by jordan grimmer, huge scene, grass, art greg rutkowski
-        - a fantasy style portrait painting of rachel lane / alison brie hybrid in the style of francois boucher oil painting unreal 5 daz. rpg portrait, extremely detailed artgerm greg rutkowski alphonse mucha greg hildebrandt tim hildebrandt
-        - athena, greek goddess, claudia black, art by artgerm and greg rutkowski and magali villeneuve, bronze greek armor, owl crown, d & d, fantasy, intricate, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration
-        - closeup portrait shot of a large strong female biomechanic woman in a scenic scifi environment, intricate, elegant, highly detailed, centered, digital painting, artstation, concept art, smooth, sharp focus, warframe, illustration, thomas kinkade, tomasz alen kopera, peter mohrbacher, donato giancola, leyendecker, boris vallejo
-        - ultra realistic illustration of steve urkle as the hulk, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski and alphonse mucha
-        I want you to write me a list of detailed prompts. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
+        Below are lists of words describing different aspects of an image, that can be used to generate images with DALLE-3:
+        CATEGORIES: {CATEGORIES}
+        STYLES: {STYLES}
+        LIGHTING: {LIGHTING}
+        ARTISTS: {ARTISTS}
+        CAMERA_ANGLES: {CAMERA_ANGLES}
+        COLORS: {COLORS}
+        TEXTURES: {TEXTURES}
+        I want you to write me 5 detailed prompts using several of the above categories. Use as many words from the lists as you find relevant. In the prompt, describe the scene, and follow by adding only relevant modifiers words from the lists divided by commas to alter the mood, style, lighting, and more.
         Here is the idea you have to work on:
         </END OF SYSTEM PROMPT>"""}

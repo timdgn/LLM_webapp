@@ -501,7 +501,9 @@ def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
     try:
         image_urls = []
         for _ in range(dalle_options['n']):
-            response = client.images.generate(prompt=st.session_state.prompt,
+            response = client.images.generate(model="dall-e-3",
+                                              prompt=st.session_state.prompt,
+                                              size=dalle_options['size'],
                                               quality=dalle_options['quality'])
             image_urls.append(response.data[0].url)
         st.session_state["image_urls"] = image_urls
