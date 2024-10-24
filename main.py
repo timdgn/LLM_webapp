@@ -10,6 +10,9 @@ import io
 from typing import Dict, List, Union, Any, Tuple
 import fitz
 from glob import glob
+import os
+import requests
+import shutil
 
 from constants import *
 
@@ -50,8 +53,8 @@ def save_thread(thread_id: str, messages: List[Dict[str, Any]]) -> None:
         "messages": messages
     }
     file_path = os.path.join(THREADS_DIR, f"{thread_id}.json")
-    with open(file_path, 'w') as f:
-        json.dump(thread_data, f, indent=4)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(thread_data, f, indent=4, ensure_ascii=False)
 
 
 def create_new_thread() -> Tuple[str, Dict[str, Any]]:
@@ -512,25 +515,44 @@ def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
         st.error(f"Error generating images: {str(e)}")
 
 
-def save_image_generation(prompt: str, image_urls: List[str]) -> None:
+def save_image_generation(prompt: str, image_urls: List[str]) -> str:
     """
     Save an image generation to the history.
 
     Args:
         prompt (str): The prompt used for generation
         image_urls (List[str]): List of generated image URLs
+
+    Returns:
+        str: The ID of the saved generation
     """
     generation_id = str(uuid.uuid4())
+    
+    # Create a folder for the images
+    image_folder = os.path.join(GENERATED_IMAGES_DIR, generation_id)
+    os.makedirs(image_folder, exist_ok=True)
+    
+    # Download and save the images
+    image_paths = []
+    for i, url in enumerate(image_urls):
+        response = requests.get(url)
+        image_path = os.path.join(image_folder, f"{i}.png")
+        with open(image_path, "wb") as f:
+            f.write(response.content)
+        image_paths.append(image_path)
+
     generation_data = {
         "id": generation_id,
         "prompt": prompt,
-        "image_urls": image_urls,
+        "image_paths": image_paths,  # Save local image paths instead of URLs
         "timestamp": datetime.now().isoformat()
     }
     file_path = os.path.join(GENERATED_IMAGES_DIR, f"{generation_id}.json")
 
-    with open(file_path, 'w') as f:
-        json.dump(generation_data, f, indent=4)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(generation_data, f, indent=4, ensure_ascii=False)
+        
+    return generation_id
 
 
 def load_image_generations() -> List[Dict[str, Any]]:
@@ -558,6 +580,11 @@ def delete_image_generation(generation_id: str) -> None:
     file_path = os.path.join(GENERATED_IMAGES_DIR, f"{generation_id}.json")
     if os.path.exists(file_path):
         os.remove(file_path)
+        
+    # Delete the image folder
+    image_folder = os.path.join(GENERATED_IMAGES_DIR, generation_id)
+    if os.path.exists(image_folder):
+        shutil.rmtree(image_folder)
 
 
 def display_image_generation_history(generations: List[Dict[str, Any]]):
@@ -573,11 +600,12 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
 
         col1, col2, col3 = st.columns([3, 1, 0.5])
         with col1:
-            with st.expander(f"{timestamp}: {preview}", expanded=False):
+            with st.popover(f"{timestamp}: {preview}"):
                 st.write(generation["prompt"])
-                st.image(generation["image_urls"], use_column_width=True)
+                for image_path in generation["image_paths"]:
+                    st.image(image_path, width=500)
         with col2:
-            st.image(generation["image_urls"][0], width=50)
+            st.image(generation["image_paths"][0], width=75)
         with col3:
             if st.button("❌", key=f"delete_{generation['id']}"):
                 delete_image_generation(generation['id'])
