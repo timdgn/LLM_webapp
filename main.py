@@ -51,7 +51,7 @@ def save_thread(thread_id: str, messages: List[Dict[str, Any]]) -> None:
     }
     file_path = os.path.join(THREADS_DIR, f"{thread_id}.json")
     with open(file_path, 'w') as f:
-        json.dump(thread_data, f)
+        json.dump(thread_data, f, indent=4)
 
 
 def create_new_thread() -> Tuple[str, Dict[str, Any]]:
@@ -530,7 +530,7 @@ def save_image_generation(prompt: str, image_urls: List[str]) -> None:
     file_path = os.path.join(GENERATED_IMAGES_DIR, f"{generation_id}.json")
 
     with open(file_path, 'w') as f:
-        json.dump(generation_data, f)
+        json.dump(generation_data, f, indent=4)
 
 
 def load_image_generations() -> List[Dict[str, Any]]:
