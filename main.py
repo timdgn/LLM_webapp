@@ -305,11 +305,17 @@ def display_thread_button(thread_id: str, thread_data: Dict[str, Any], threads: 
     last_updated = datetime.fromisoformat(thread_data["last_updated"]).strftime("%Y-%m-%d %H:%M")
     preview = get_thread_preview(thread_data)
 
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([0.6, 0.12, 0.1])
     with col1:
         if st.button(f"{last_updated}: {preview}", key=thread_id):
             st.session_state.current_thread_id = thread_id
     with col2:
+        with st.popover("⬇️"):
+            download_thread_export(thread_data, "txt")
+            download_thread_export(thread_data, "json")
+            download_thread_export(thread_data, "md")
+            download_thread_export(thread_data, "csv")
+    with col3:
         if st.button("❌", key=f"delete_{thread_id}"):
             threads = delete_thread(thread_id, threads)
             st.rerun()
@@ -621,6 +627,111 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
             if st.button("❌", key=f"delete_{generation['id']}"):
                 delete_image_generation(generation['id'])
                 st.rerun()
+
+
+def export_thread(thread_data: Dict[str, Any], format: str = "txt") -> Tuple[str, str]:
+    """
+    Export thread data to various formats.
+    
+    Args:
+        thread_data (Dict[str, Any]): The thread data to export
+        format (str): Export format ('txt', 'json', 'md', or 'csv')
+    
+    Returns:
+        Tuple[str, str]: (content, filename)
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"chat_export_{timestamp}.{format}"
+    
+    if format == "txt":
+        content = "=== Chat Export ===\n"
+        content += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        
+        for msg in thread_data["messages"]:
+            content += f"[{msg['role'].upper()}]\n"
+            if isinstance(msg['content'], list):
+                for item in msg['content']:
+                    if item['type'] == 'text':
+                        content += f"{item['text']}\n"
+                    elif item['type'] == 'image_url':
+                        content += f"[Image: {item.get('original_name', 'uploaded_image')}]\n"
+            else:
+                content += f"{msg['content']}\n"
+            content += "\n" + "-"*50 + "\n\n"
+    
+    elif format == "json":
+        content = json.dumps(thread_data, indent=2, ensure_ascii=False)
+    
+    elif format == "md":
+        content = "# Chat Export\n\n"
+        content += f"*Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n"
+        
+        for msg in thread_data["messages"]:
+            content += f"### {msg['role'].title()}\n\n"
+            if isinstance(msg['content'], list):
+                for item in msg['content']:
+                    if item['type'] == 'text':
+                        content += f"{item['text']}\n\n"
+                    elif item['type'] == 'image_url':
+                        content += f"![{item.get('original_name', 'uploaded_image')}]\n\n"
+            else:
+                content += f"{msg['content']}\n\n"
+            content += "---\n\n"
+    
+    elif format == "csv":
+        content = "Timestamp,Role,Content\n"
+        for msg in thread_data["messages"]:
+            if isinstance(msg['content'], list):
+                msg_content = " ".join(
+                    item['text'] if item['type'] == 'text' 
+                    else f"[Image: {item.get('original_name', 'uploaded_image')}]"
+                    for item in msg['content']
+                )
+            else:
+                msg_content = msg['content']
+            # Escape quotes and newlines for CSV
+            msg_content = msg_content.replace('"', '""').replace('\n', ' ')
+            content += f"{thread_data['last_updated']},{msg['role']},\"{msg_content}\"\n"
+    
+    else:
+        raise ValueError(f"Unsupported export format: {format}")
+        
+    return content, filename
+
+def download_thread_export(thread_data: Dict[str, Any], format: str):
+    """
+    Create a download button for thread export.
+    
+    Args:
+        thread_data (Dict[str, Any]): The thread data to export
+        format (str): Export format
+    """
+    content, filename = export_thread(thread_data, format)
+    
+    # Convert content to bytes
+    if format == "json":
+        bytes_data = content.encode('utf-8')
+        mime = "application/json"
+    elif format == "csv":
+        bytes_data = content.encode('utf-8')
+        mime = "text/csv"
+    elif format == "md":
+        bytes_data = content.encode('utf-8')
+        mime = "text/markdown"
+    else:  # txt
+        bytes_data = content.encode('utf-8')
+        mime = "text/plain"
+    
+    # Add a unique key using thread ID and format
+    button_key = f"download_{thread_data['id']}_{format}"
+    
+    st.download_button(
+        label=f"Download as {format.upper()}",
+        data=bytes_data,
+        file_name=filename,
+        mime=mime,
+        key=button_key  # Add the unique key here
+    )
 
 
 def main():

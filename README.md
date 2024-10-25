@@ -62,16 +62,20 @@ For both methods, once the application is running:
 
 ## Features
 
+### ChatGPT Features
+- **Modes**: You can choose between different modes of ChatGPT: Default, data science expert and prompt engineer for image generation.
 - **File Upload**: You can upload text, pdf files and images to use in conversations.
-- **Conversation History**: The app saves and loads previous conversations.
-- **Thread Management**: You can create new conversation threads and navigate through existing ones.
+- **Thread History Management**: You can create new conversation threads, navigate through previous ones and delete any of them.
+- **Export**: You can export the conversation history in different formats (txt, json, md, csv).
+
+### DALL-E Features
 - **Image Generation**: You can generate images with the DALL-E API.
-- **DALL-E Options**: You can choose the size, quality and number of generated images.
-- **Image Generation History**: The app saves and loads previous image generations, along with its prompt.
+- **Image Generation Options**: You can choose the size, quality and number of generated images.
+- **Image Generation History Management**: The app saves and loads previous image generations, along with its prompt. You can delete any of the generated images.
 
 ## Next features
 
-- ...
+- **Export**: You will be able to export the image generations.
 
 ## Contributing
 
