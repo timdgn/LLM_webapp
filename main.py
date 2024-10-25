@@ -216,8 +216,10 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
         The selected mode, updated threads dictionary, uploaded files, selected tab, and DALL-E options
     """
     with st.sidebar:
-        st.title("📝 Choose interaction type")
-        interaction_type = st.radio("Interaction Type", list(INTERACTION_TYPES.values()), index=0)
+        st.title("✨ Choose interaction type")
+        interaction_type = st.radio("Interaction Type", list(INTERACTION_TYPES.values()), index=0, label_visibility="collapsed")
+        
+        st.write("")
 
         mode = list(SYSTEM_PROMPTS.keys())[0]
         uploaded_files = None
@@ -227,8 +229,15 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
 
         if interaction_type == INTERACTION_TYPES["chat"]:
             with st.container(border=True):
-                st.title("⚙️ Choose a mode")
-                mode = st.radio("Mode", list(SYSTEM_PROMPTS.keys()), index=0, label_visibility="collapsed")
+                st.title("⚙️ Select a mode")
+                mode = st.radio(
+                    "Mode", 
+                    list(SYSTEM_PROMPTS.keys()),
+                    index=0,
+                    label_visibility="collapsed",
+                    captions=["Perfect for conversations without specific expertise",
+                             "Specialized in Python, data science and code review", 
+                             "Specialized in generating detailed DALL-E prompts"])
 
                 st.divider()
 
@@ -259,6 +268,8 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
                 st.title("🎨 Image Generation History")
                 generations = load_image_generations()
                 display_image_generation_history(generations)
+
+        st.write("")
 
         with st.container(border=True):
             st.caption(f'By Timmothy Dangeon, PharmD & Healthcare Machine Learning Engineer')
@@ -663,3 +674,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
