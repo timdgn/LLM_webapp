@@ -10,9 +10,11 @@ It can also generate images using the OpenAI DALL-E API.
 
 Before starting, make sure you have installed the following dependencies:
 
-- Python 3.8.19 or higher
+- Python 3.11.10 or higher
 
-## Installation
+## Installation & Usage
+
+### Common Steps
 
 1. Clone this repository:
 
@@ -21,18 +23,18 @@ Before starting, make sure you have installed the following dependencies:
     cd LLM_webapp
     ```
 
-2. Install the dependencies:
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-## Usage
-
-1. Add your OpenAI API key to `.streamlit/secrets.toml`:
+2. Add your OpenAI API key to `.streamlit/secrets.toml`:
 
     ```toml
     openai_api_key = "YOUR_OPENAI_API_KEY"
+    ```
+
+### Method 1: Local Installation
+
+1. Install the dependencies:
+
+    ```bash
+    pip install -r requirements.txt
     ```
 
 2. Start the Streamlit application:
@@ -41,11 +43,7 @@ Before starting, make sure you have installed the following dependencies:
     streamlit run main.py
     ```
 
-3. Open your browser and go to `http://localhost:8501` to use the app.
-
-## Usage with Docker
-
-You can also build and run the application using Docker. Follow these steps:
+### Method 2: Using Docker
 
 1. Build the Docker image:
 
@@ -59,9 +57,8 @@ You can also build and run the application using Docker. Follow these steps:
     docker run -d -p 8501:8501 llm_webapp
     ```
 
-   This command maps port `8501` on your local machine to port `8501` in the Docker container and runs the application in the background.
-
-3. Open your browser and go to `http://localhost:8501` to use the app.
+For both methods, once the application is running:
+- Open your browser and go to `http://localhost:8501` to use the app.
 
 ## Features
 
