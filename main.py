@@ -264,7 +264,8 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
                 st.title("🖼️ DALL-E Options")
                 dalle_options['size'] = st.selectbox("Image Size", ["1024x1024"], index=0)
                 dalle_options['quality'] = st.selectbox("Image Quality", ["Standard", "HD"], index=0).lower()
-                dalle_options['n'] = st.slider("Number of Images", min_value=1, max_value=4, value=1)
+                # dalle_options['n'] = st.slider("Number of Images", min_value=1, max_value=4, value=1)
+                dalle_options['n'] = st.number_input("Number of Images (max 4)", min_value=1, max_value=4, value=1)
 
                 st.title("🎨 Image Generation History")
                 generations = load_image_generations()
@@ -620,9 +621,23 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
         col1, col2, col3 = st.columns([3, 1, 0.5])
         with col1:
             with st.popover(f"{timestamp}: {preview}"):
+                
+                st.markdown("##### Prompt :")
                 st.write(generation["prompt"])
-                for image_path in generation["image_paths"]:
+                st.markdown("#")
+
+                st.markdown(f"##### {len(generation['image_paths'])} images generated :")
+                for i, image_path in enumerate(generation["image_paths"]):
                     st.image(image_path, width=500)
+                    with open(image_path, "rb") as file:
+                        image_bytes = file.read()
+                        st.download_button(
+                            label="Download ⬇️",
+                            data=image_bytes,
+                            file_name=f"{generation['id']}_image_{i}.png",
+                            mime="image/png",
+                            key=f"export_{generation['id']}_{i}")
+                    st.markdown("#")
         with col2:
             st.image(generation["image_paths"][0], width=75)
         with col3:
