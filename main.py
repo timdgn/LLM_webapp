@@ -632,7 +632,8 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
                     with open(image_path, "rb") as file:
                         image_bytes = file.read()
                         st.download_button(
-                            label="Download ⬇️",
+                            label=f"Download image ({i+1}/{len(generation['image_paths'])})",
+                            icon="💾",
                             data=image_bytes,
                             file_name=f"{generation['id']}_image_{i}.png",
                             mime="image/png",
@@ -797,8 +798,18 @@ def main():
 
         if "image_urls" in st.session_state:
             st.markdown("###")
-            for url in st.session_state.image_urls:
+            for i, url in enumerate(st.session_state.image_urls):
                 st.image(url, use_column_width=True)
+                response = requests.get(url)
+                image_bytes = response.content
+                st.download_button(
+                    label=f"Download image ({i+1}/{len(st.session_state.image_urls)})",
+                    icon="💾",
+                    data=image_bytes,
+                    file_name=f"generated_image_{i}.png",
+                    mime="image/png",
+                    key=f"download_{i}")
+                st.markdown("###")
 
 
 if __name__ == "__main__":
