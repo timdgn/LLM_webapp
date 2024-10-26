@@ -1,7 +1,7 @@
 import os
 
 
-PROJECT_DIR = os.path.dirname(__file__)
+PROJECT_DIR = os.path.dirname(os.path.dirname(__file__))
 THREADS_DIR = os.path.join(PROJECT_DIR, "data", "thread_history")
 UPLOADED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "uploaded_images")
 GENERATED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "generated_images")
