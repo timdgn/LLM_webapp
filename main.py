@@ -782,7 +782,8 @@ def main():
 
         if "image_urls" in st.session_state:
             st.markdown("###")
-            st.image(st.session_state.image_urls, width=300)
+            for url in st.session_state.image_urls:
+                st.image(url, use_column_width=True)
 
 
 if __name__ == "__main__":
