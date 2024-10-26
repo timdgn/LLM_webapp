@@ -13,6 +13,7 @@ from glob import glob
 import os
 import requests
 import shutil
+import concurrent.futures
 
 from constants import *
 
@@ -508,24 +509,25 @@ def initialize_session_state(model: str):
 
 def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
     """
-    Generate images using DALL-E.
+    Generate images using DALL-E in parallel.
 
     Args:
         client (OpenAI): The OpenAI client
-        prompt (str): The prompt for image generation
         dalle_options (Dict[str, Any]): Options for DALL-E image generation
-
-    Returns:
-
     """
+
+    prompt = st.session_state.prompt
+    def generate_single_image(prompt):
+        response = client.images.generate(model="dall-e-3",
+                                          prompt=prompt,
+                                          size=dalle_options['size'],
+                                          quality=dalle_options['quality'])
+        return response.data[0].url
+
     try:
-        image_urls = []
-        for _ in range(dalle_options['n']):
-            response = client.images.generate(model="dall-e-3",
-                                              prompt=st.session_state.prompt,
-                                              size=dalle_options['size'],
-                                              quality=dalle_options['quality'])
-            image_urls.append(response.data[0].url)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(generate_single_image, prompt) for _ in range(dalle_options['n'])]
+            image_urls = [future.result() for future in concurrent.futures.as_completed(futures)]
         st.session_state["image_urls"] = image_urls
 
     except Exception as e:
