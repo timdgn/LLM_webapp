@@ -626,7 +626,7 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
                 st.write(generation["prompt"])
                 st.markdown("#")
 
-                st.markdown(f"##### {len(generation['image_paths'])} images generated :")
+                st.markdown(f"##### {len(generation['image_paths'])} images generated :" if len(generation['image_paths']) > 1 else "##### 1 image generated :")
                 for i, image_path in enumerate(generation["image_paths"]):
                     st.image(image_path, width=500)
                     with open(image_path, "rb") as file:
