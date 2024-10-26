@@ -72,10 +72,11 @@ For both methods, once the application is running:
 - **Image Generation**: You can generate images with the DALL-E API.
 - **Image Generation Options**: You can choose the size, quality and number of generated images.
 - **Image Generation History Management**: The app saves and loads previous image generations, along with its prompt. You can delete any of the generated images.
+- **Export**: You can export the generated images.
 
 ## Next features
 
-- **Export**: You will be able to export the image generations.
+- **...**
 
 ## Contributing
 
