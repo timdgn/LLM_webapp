@@ -33,10 +33,20 @@ def load_threads() -> Dict[str, Dict[str, Any]]:
         Dict[str, Dict[str, Any]]: A dictionary of thread IDs to thread data
     """
     threads = {}
+    current_time = datetime.now()
     for file_path in glob(os.path.join(THREADS_DIR, "*.json")):
         with open(file_path, 'r') as f:
             thread_data = json.load(f)
-            threads[thread_data["id"]] = thread_data
+            thread_id = thread_data["id"]
+            last_updated = datetime.fromisoformat(thread_data["last_updated"])
+            
+            # Check if the thread is empty and older than 2 minutes
+            if not thread_data["messages"] and (current_time - last_updated).total_seconds() > 120:
+                # Delete the empty thread
+                os.remove(file_path)
+            else:
+                threads[thread_id] = thread_data
+    
     return threads
 
 
@@ -266,6 +276,8 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
                 dalle_options['quality'] = st.selectbox("Image Quality", ["Standard", "HD"], index=0).lower()
                 # dalle_options['n'] = st.slider("Number of Images", min_value=1, max_value=4, value=1)
                 dalle_options['n'] = st.number_input("Number of Images (max 4)", min_value=1, max_value=4, value=1)
+
+                st.divider()
 
                 st.title("🎨 Image Generation History")
                 generations = load_image_generations()
