@@ -18,7 +18,7 @@ import concurrent.futures
 from constants import *
 
 
-def init_directories():
+def init_directories() -> None:
     """Initialize necessary directories for storing thread history and images."""
     os.makedirs(THREADS_DIR, exist_ok=True)
     os.makedirs(UPLOADED_IMAGES_DIR, exist_ok=True)
@@ -119,12 +119,12 @@ def delete_thread(thread_id: str, threads: Dict[str, Dict[str, Any]]) -> Dict[st
     return threads
 
 
-def save_uploaded_image(image_file, thread_id: str) -> str:
+def save_uploaded_image(image_file: st.uploaded_file_manager.UploadedFile, thread_id: str) -> str:
     """
     Save an uploaded image and return its filename.
 
     Args:
-        image_file: The uploaded image file
+        image_file (st.uploaded_file_manager.UploadedFile): The uploaded image file
         thread_id (str): The ID of the current thread
 
     Returns:
@@ -142,7 +142,7 @@ def save_uploaded_image(image_file, thread_id: str) -> str:
     return image_filename
 
 
-def display_message(message: Dict[str, Any]):
+def display_message(message: Dict[str, Any]) -> None:
     """
     Display a chat message in the Streamlit interface.
 
@@ -166,10 +166,10 @@ def prepare_message_content(content: Union[str, List[Dict[str, Any]]]) -> Union[
     Prepare message content for the API request.
 
     Args:
-        content: The message content to prepare
+        content (Union[str, List[Dict[str, Any]]]): The message content to prepare
 
     Returns:
-        The prepared message content
+        Union[str, List[Dict[str, Any]]]: The prepared message content
     """
     if not isinstance(content, list):
         return content
@@ -215,7 +215,7 @@ def prepare_messages(thread_messages: List[Dict[str, Any]], mode: str) -> List[D
     return messages
 
 
-def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], list, str, Dict[str, Any]]:
+def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], List[st.uploaded_file_manager.UploadedFile], str, Dict[str, Any]]:
     """
     Set up the sidebar interface.
 
@@ -223,7 +223,7 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
         threads (Dict[str, Dict[str, Any]]): The current threads dictionary
 
     Returns:
-        Tuple[str, Dict[str, Dict[str, Any]], list, str, Dict[str, Any]]:
+        Tuple[str, Dict[str, Dict[str, Any]], List[st.uploaded_file_manager.UploadedFile], str, Dict[str, Any]]:
         The selected mode, updated threads dictionary, uploaded files, selected tab, and DALL-E options
     """
     with st.sidebar:
@@ -293,7 +293,7 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
     return mode, threads, uploaded_files, interaction_type, dalle_options
 
 
-def display_thread_history(threads: Dict[str, Dict[str, Any]]):
+def display_thread_history(threads: Dict[str, Dict[str, Any]]) -> None:
     """
     Display the thread history in the sidebar.
 
@@ -307,7 +307,7 @@ def display_thread_history(threads: Dict[str, Dict[str, Any]]):
         display_thread_button(thread_id, thread_data, threads)
 
 
-def display_thread_button(thread_id: str, thread_data: Dict[str, Any], threads: Dict[str, Dict[str, Any]]):
+def display_thread_button(thread_id: str, thread_data: Dict[str, Any], threads: Dict[str, Dict[str, Any]]) -> None:
     """
     Display a button for a thread in the sidebar.
 
@@ -354,13 +354,13 @@ def get_thread_preview(thread_data: Dict[str, Any]) -> str:
     return "Image thread"
 
 
-def process_files(prompt: str, uploaded_files, thread_id: str) -> Tuple[str, List[Dict[str, str]]]:
+def process_files(prompt: str, uploaded_files: List[st.uploaded_file_manager.UploadedFile], thread_id: str) -> Tuple[str, List[Dict[str, str]]]:
     """
     Process uploaded files of all types.
 
     Args:
         prompt (str): The user's prompt
-        uploaded_files: Uploaded files of any type
+        uploaded_files (List[st.uploaded_file_manager.UploadedFile]): Uploaded files of any type
         thread_id (str): The ID of the current thread
 
     Returns:
@@ -398,54 +398,7 @@ def process_files(prompt: str, uploaded_files, thread_id: str) -> Tuple[str, Lis
     return display_prompt, image_data_list
 
 
-def process_text_files(prompt: str, text_files) -> str:
-    """
-    Process uploaded text files and append their content to the prompt.
-
-    Args:
-        prompt (str): The original prompt
-        text_files: The uploaded text files
-
-    Returns:
-        str: The prompt with appended file content
-    """
-    if not text_files:
-        return prompt
-
-    display_prompt = prompt
-    for uploaded_file in text_files:
-        file_content = uploaded_file.read()
-        try:
-            decoded_content = file_content.decode('utf-8')
-            display_prompt += f"\nAttached text file '{uploaded_file.name}':\n{decoded_content}"
-        except UnicodeDecodeError:
-            display_prompt += f"\nAttached binary file '{uploaded_file.name}':\n[Binary content encoded in base64]"
-
-    return display_prompt
-
-
-def process_image_files(image_files) -> List[Dict[str, str]]:
-    """
-    Process uploaded image files.
-
-    Args:
-        image_files: The uploaded image files
-
-    Returns:
-        List[Dict[str, str]]: A list of processed image data
-    """
-    image_data_list = []
-    if image_files:
-        for image_file in image_files:
-            image_filename = save_uploaded_image(image_file)
-            image_data_list.append({
-                "filename": image_filename,
-                "original_name": image_file.name
-            })
-    return image_data_list
-
-
-def create_message_content(prompt: str, image_data_list: List[Dict[str, str]]):
+def create_message_content(prompt: str, image_data_list: List[Dict[str, str]]) -> Union[str, List[Dict[str, Any]]]:
     """
     Create the message content combining text and images.
 
@@ -468,14 +421,14 @@ def create_message_content(prompt: str, image_data_list: List[Dict[str, str]]):
     return message_content
 
 
-def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mode: str):
+def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files: List[st.uploaded_file_manager.UploadedFile], mode: str) -> None:
     """
     Handle the chat input and generate a response.
 
     Args:
         client (OpenAI): The OpenAI client
         thread (Dict[str, Any]): The current thread
-        uploaded_files: Uploaded files
+        uploaded_files (List[st.uploaded_file_manager.UploadedFile]): Uploaded files
         mode (str): The current chat mode
     """
     if prompt := st.chat_input("What's on your mind ? 🤔"):
@@ -505,7 +458,7 @@ def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mo
         st.rerun()  # Rerun to remove the files items
 
 
-def initialize_session_state(model: str):
+def initialize_session_state(model: str) -> None:
     """
     Initialize the session state variables.
 
@@ -520,7 +473,7 @@ def initialize_session_state(model: str):
         st.session_state["file_uploader_key"] = 0  # To remove the files items after rerun
 
 
-def generate_images(client: OpenAI, dalle_options: Dict[str, Any], final_prompt: str):
+def generate_images(client: OpenAI, dalle_options: Dict[str, Any], final_prompt: str) -> None:
     """
     Generate images using DALL-E in parallel.
 
@@ -618,7 +571,7 @@ def delete_image_generation(generation_id: str) -> None:
         shutil.rmtree(image_folder)
 
 
-def display_image_generation_history(generations: List[Dict[str, Any]]):
+def display_image_generation_history(generations: List[Dict[str, Any]]) -> None:
     """
     Display the image generation history in the sidebar.
 
@@ -727,7 +680,7 @@ def export_thread(thread_data: Dict[str, Any], format: str = "txt") -> Tuple[str
         
     return content, filename
 
-def download_thread_export(thread_data: Dict[str, Any], format: str):
+def download_thread_export(thread_data: Dict[str, Any], format: str) -> None:
     """
     Create a download button for thread export.
     
@@ -763,7 +716,7 @@ def download_thread_export(thread_data: Dict[str, Any], format: str):
     )
 
 
-def main():
+def main() -> None:
     """Main function to run the Streamlit app."""
     st.set_page_config(page_title="LLM Chat", page_icon="✨")
     api_key = st.secrets["openai_api_key"]
