@@ -11,19 +11,19 @@ INTERACTION_TYPES = {'chat': 'ChatGPT',
 
 AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
 
-CATEGORIES = ["album cover", "anatomical drawing", "anatomy", "book cover", "business card", "brand identity", "calendar design", "character design",
-              "character design multiple poses", "character sheet", "chart design", "doll house", "color palette", "enamel pin", "comic strips", "coloring book page",
-              "encyclopedia page", "fashion moodboard", "flat lay photography", "flyer", "full body character design", "game assets", "game ui", "house cutaway",
-              "house plan", "icon set design", "ikea guide", "illustration split circle four seasons", "infographic", "interior design", "jewelry design", "knolling",
-              "logo design", "magazine cover", "menu design", "mobile app ui design", "packaging design", "outfit", "newsletter design", "nail art", "popup book",
-              "postage stamp", "poster", "propaganda poster", "sticker", "seamless pattern", "schematic diagram", "reference sheet", "story board", "wall painting",
-              "wedding invitation", "t shirt vector", "tarot card", "tattoo design", "anime character design", "website design", "illustrations", "coloring pages",
-              "watercolor", "watercolor animals", "nursery", "tshirt", "cute animals", "art", "animal", "botanical watercolor"]
+CATEGORIES = ["album cover", "anatomical drawing", "anatomy", "animal", "anime character design", "art", "book cover", "botanical watercolor", "brand identity", 
+              "business card", "calendar design", "character design", "character design multiple poses", "character sheet", "chart design", "coloring book page",
+              "coloring pages", "comic strips", "color palette", "cute animals", "doll house", "enamel pin", "encyclopedia page", "fashion moodboard", 
+              "flat lay photography", "flyer", "full body character design", "game assets", "game ui", "house cutaway", "house plan", "icon set design", 
+              "ikea guide", "illustration split circle four seasons", "illustrations", "infographic", "interior design", "jewelry design", "knolling",
+              "logo design", "magazine cover", "menu design", "mobile app ui design", "nail art", "newsletter design", "nursery", "outfit", "packaging design",
+              "popup book", "postage stamp", "poster", "propaganda poster", "reference sheet", "schematic diagram", "seamless pattern", "sticker", "story board",
+              "tarot card", "tattoo design", "tshirt", "t shirt vector", "wall painting", "watercolor", "watercolor animals", "website design", "wedding invitation"]
 
-STYLES = ["3D", "Abstract Art", "Abstract Expressionism", "Analytical Cubism", "Art Brut", "Art Deco", "Art Nouveau", "Bayeux Tapestry", "Britpop", "Bronze Age",
-          "Cartographic Art", "Cartoon", "Childrens Book Illustration", "Color Field Painting", "Colorful Collages", "Comic", "Constructivism", "Coptic Art", "Cubism",
-          "Impressionism", "Abstract Illusion", "Action Painting", "Alebrijes", "Arte Povera", "Automatism", "Bauhaus", "Brutalism", "Bubble Goth", "Caricature",
-          "Cinematic", "Cloisonnism", "Collage Art", "Commercial Art", "Conceptual Art", "Concretism", "Surrealism", "Realism", "Expressionism"]
+STYLES = ["3D", "Abstract Art", "Abstract Expressionism", "Abstract Illusion", "Action Painting", "Alebrijes", "Analytical Cubism", "Art Brut", "Art Deco", 
+          "Art Nouveau", "Arte Povera", "Automatism", "Bauhaus", "Bayeux Tapestry", "Britpop", "Bronze Age", "Brutalism", "Bubble Goth", "Caricature",
+          "Cartographic Art", "Cartoon", "Childrens Book Illustration", "Cinematic", "Cloisonnism", "Collage Art", "Color Field Painting", "Colorful Collages", 
+          "Commercial Art", "Comic", "Conceptual Art", "Concretism", "Constructivism", "Coptic Art", "Cubism", "Expressionism", "Impressionism", "Realism", "Surrealism"]
 
 LIGHTING = ["Backlighting", "Blacklight", "Blue Hour", "Bokeh", "Chemiluminescence", "Cinematic Lighting", "Crepuscular Rays", "Dappled Light", "Disco Lighting",
             "Dramatic Lighting", "Dreamy Glow", "Dual Lighting", "Dusk", "Electroluminescent Wire", "Electromagnetic Spectrum", "Flare", "Floodlight",
@@ -32,33 +32,24 @@ LIGHTING = ["Backlighting", "Blacklight", "Blue Hour", "Bokeh", "Chemiluminescen
             "Moody Lighting", "Moonlight", "Neon Lights", "Nightclub Lighting", "Nuclear Wasted Glow", "Prismatic Highlights", "Radioluminescence", "Rainbow Sparks",
             "Ray Tracing Reflections", "Shimmering Lights", "Soft Lighting", "Starry", "Sunlighting", "Sunlit", "Torchlit", "Twilight Hour"]
 
-ARTISTS = ["Adrian Donoghue", "Adrian Tomine", "Akihiko Yoshida", "Akira Toriyama", "Akos Major", "Alan Lee", "Albert Watson", "Alberto Seveso", "Alex Grey",
-           "Alex Timmermans", "Alphonse Mucha", "Andro Botticelli", "Anna Dittmann", "Anne Bachelier", "Antonio Mora", "Arshile Gorky", "Arthur Rackham",
-           "Atey Ghailan", "Aubrey Beardsley", "August Macke", "Basquiat", "Benoit Mandelbrot", "Bernie Fuchs", "Bernini", "Bill Mantlo", "Bob Eggleton", "Brian Bolland",
-           "Brian Froud", "Brian Kesinger", "Brothers Hildebrandt", "Bruce Pennington", "Butcher Billy", "Cai Guo Qiang", "Canaletto", "Caravaggio", "Charlie Bowater",
-           "Chiharu Shiota", "Cindy Sherman", "Claude Monet", "Coby Whitmore", "Conrad Roset", "Craig Mullins", "Daido Moriyama", "Dante Gabriel Rossetti", "David Hockney",
-           "Diego Rivera", "Donatello", "Dorothy Lathrop", "Drew Struzan", "El Anatsui", "El Lissitzky", "Ellen Jewett", "Enki Bilal", "Erte", "Escher", "Francisco De Goya",
-           "Francoise Nielly", "Frank Miller", "Frank Thorne", "Frida Kahlo", "Fullmetal Alchemist", "Georg Baselitz", "Georges De La Tou", "Picasso", "Van Gogh", "Da Vinci",
-           "Michelangelo", "Rembrandt"]
+CAMERA_ANGLES = ["100mm", "14mm", "16k", "24mm", "300mm", "32k", "35mm", "360-degree camera", "400mm", "4k", "500mm", "600mm", "85mm", "8k", "Abstract perspective",
+                 "Aerial Photography", "Black and white", "Bokeh effect", "Circular fisheye lens", "Closeup", "Double exposure", "Drone Photography", "Dutch angle",
+                 "Experimental photography", "Far Shot", "Film noir style", "Focal Blur", "Full Body Shot", "Full Focus", "Ghostly blur", "Glitch art", "Headshot Photography",
+                 "High Angle Shot", "High contrast", "Holga camera", "Infrared photography", "Lenticular lens", "Light painting", "Long Exposure", "Low Angle Shot",
+                 "Macro Lens", "Medium Shot", "Minimalist style", "Motion blur", "Neon lighting", "Night vision", "Oblique angle", "Out Of Focus", "Panoramic view",
+                 "Pixelated effect", "Polaroid camera", "Portrait Photography", "Prism lens", "Refraction effect", "Retro style", "Selfie", "Short Exposure",
+                 "Split focus", "Stereoscopic 3D", "Telephoto Lens", "Tiltshift", "Time-lapse", "Top Down Shot", "Ultra Wide Angle", "Underwater photography",
+                 "Vintage look", "Wide Angle"]
 
-CAMERA_ANGLES = ["360-degree camera", "100mm", "14mm", "16k", "24mm", "300mm", "32k", "35mm", "400mm", "4k", "500mm", "600mm", "85mm", "8k", "High contrast",
-                 "Holga camera", "Infrared photography", "Lenticular lens", "Light painting", "Minimalist style", "Motion blur", "Neon lighting", "Night vision",
-                 "Oblique angle", "Panoramic view", "Pixelated effect", "Polaroid camera", "Prism lens", "Refraction effect", "Retro style", "Split focus",
-                 "Stereoscopic 3D", "Time-lapse", "Underwater photography", "Vintage look", "Abstract perspective", "Black and white", "Bokeh effect", "Circular fisheye lens",
-                 "Double exposure", "Dutch angle", "Experimental photography", "Film noir style", "Ghostly blur", "Glitch art", "Aerial Photography", "Closeup",
-                 "Drone Photography", "Far Shot", "Focal Blur", "Full Body Shot", "Full Focus", "Headshot Photography", "High Angle Shot", "Long Exposure", "Low Angle Shot",
-                 "Macro Lens", "Medium Shot", "Out Of Focus", "Portrait Photography", "Selfie", "Short Exposure", "Telephoto Lens", "Tiltshift", "Top Down Shot",
-                 "Ultra Wide Angle", "Wide Angle"]
+COLORS = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond", "Blue", "BlueViolet", "Brown", "BurlyWood",
+          "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue", "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod", "DarkGray",
+          "DarkGreen", "DarkGrey", "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "DarkOrange", "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue",
+          "DarkSlateGray", "DarkSlateGrey", "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "FireBrick", "FloralWhite",
+          "ForestGreen", "Fuchsia", "Gainsboro", "Green", "Orange", "Red", "White", "Yellow"]
 
-COLORS = ["Red", "Blue", "Green", "Yellow", "Orange", "AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond",
-          "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue", "DarkBlue", "DarkCyan", "DarkGoldenRod",
-          "DarkGray", "DarkGrey", "DarkMagenta", "DarkOliveGreen", "DarkOrange", "DarkOrchid", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey",
-          "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "ForestGreen", "Fuchsia", "Gainsboro", "Cornsilk", "Crimson", "Cyan", "DarkGreen", "DarkKhaki",
-          "DarkRed", "DarkSalmon", "DarkTurquoise", "DarkViolet", "FireBrick", "FloralWhite"]
-
-
-TEXTURES = ["3d fractals", "anodized titanium", "brushed aluminum", "agate", "aluminum", "awning stripe", "ceramic", "amber", "basalt", "celtic knot", "anodized", "brass",
-            "bumpy", "chalk stripes", "ammolite", "breton stripes pattern", "candy stripes", "amigurumi", "brick", "chain pattern", "amethyst", "bronze", "chainmail"]
+TEXTURES = ["3d fractals", "agate", "aluminum", "amber", "amethyst", "amigurumi", "ammolite", "anodized", "anodized titanium", "awning stripe", "basalt",
+            "brass", "breton stripes pattern", "brick", "bronze", "brushed aluminum", "bumpy", "candy stripes", "celtic knot", "ceramic", "chain pattern", "chainmail",
+            "chalk stripes"]
 
 SYSTEM_PROMPTS = {
     "Default": "",
