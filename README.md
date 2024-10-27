@@ -73,6 +73,7 @@ For both methods, once the application is running:
 - **Image Generation Options**: You can choose the size, quality and number of generated images.
 - **Image Generation History Management**: The app saves and loads previous image generations, along with its prompt. You can delete any of the generated images.
 - **Export**: You can export the generated images.
+- **Advanced Prompt Modifiers**: You can select categories, styles, lighting, camera angles, colors and textures to add to your prompt.
 
 ## Next features
 
