@@ -79,10 +79,9 @@ SYSTEM_PROMPTS = {
         CATEGORIES: {CATEGORIES}
         STYLES: {STYLES}
         LIGHTING: {LIGHTING}
-        ARTISTS: {ARTISTS}
         CAMERA_ANGLES: {CAMERA_ANGLES}
         COLORS: {COLORS}
         TEXTURES: {TEXTURES}
-        I want you to write me 5 detailed prompts using several of the above categories. Use as many words from the lists as you find relevant. In the prompt, describe the scene, and follow by adding only relevant modifiers words from the lists divided by commas to alter the mood, style, lighting, and more.
+        I want you to write me 5 detailed prompts using several of the above categories. Use as many words from the lists as you find relevant. In the prompt, describe the scene, and follow by adding only relevant modifiers words from the lists that are relevant to the user's scene description and can enhance the image, divided by commas, to alter the mood, style, lighting, and more.
         Here is the idea you have to work on:
         </END OF SYSTEM PROMPT>"""}

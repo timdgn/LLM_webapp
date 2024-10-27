@@ -520,16 +520,15 @@ def initialize_session_state(model: str):
         st.session_state["file_uploader_key"] = 0  # To remove the files items after rerun
 
 
-def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
+def generate_images(client: OpenAI, dalle_options: Dict[str, Any], final_prompt: str):
     """
     Generate images using DALL-E in parallel.
 
     Args:
         client (OpenAI): The OpenAI client
         dalle_options (Dict[str, Any]): Options for DALL-E image generation
+        final_prompt (str): The final prompt including selected categories
     """
-
-    prompt = st.session_state.prompt
     def generate_single_image(prompt):
         response = client.images.generate(model="dall-e-3",
                                           prompt=prompt,
@@ -539,7 +538,7 @@ def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
 
     try:
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(generate_single_image, prompt) for _ in range(dalle_options['n'])]
+            futures = [executor.submit(generate_single_image, final_prompt) for _ in range(dalle_options['n'])]
             image_urls = [future.result() for future in concurrent.futures.as_completed(futures)]
         st.session_state["image_urls"] = image_urls
 
@@ -547,12 +546,12 @@ def generate_images(client: OpenAI, dalle_options: Dict[str, Any]):
         st.error(f"Error generating images: {str(e)}")
 
 
-def save_image_generation(prompt: str, image_urls: List[str]) -> str:
+def save_image_generation(final_prompt: str, image_urls: List[str]) -> str:
     """
     Save an image generation to the history.
 
     Args:
-        prompt (str): The prompt used for generation
+        final_prompt (str): The final prompt including selected categories
         image_urls (List[str]): List of generated image URLs
 
     Returns:
@@ -575,7 +574,7 @@ def save_image_generation(prompt: str, image_urls: List[str]) -> str:
 
     generation_data = {
         "id": generation_id,
-        "prompt": prompt,
+        "prompt": final_prompt,
         "image_paths": image_paths,  # Save local image paths instead of URLs
         "timestamp": datetime.now().isoformat()
     }
@@ -640,7 +639,7 @@ def display_image_generation_history(generations: List[Dict[str, Any]]):
 
                 st.markdown(f"##### {len(generation['image_paths'])} images generated :" if len(generation['image_paths']) > 1 else "##### 1 image generated :")
                 for i, image_path in enumerate(generation["image_paths"]):
-                    st.image(image_path, width=500)
+                    st.image(image_path, width=300)
                     with open(image_path, "rb") as file:
                         image_bytes = file.read()
                         st.download_button(
@@ -799,17 +798,34 @@ def main():
     elif interaction_type == INTERACTION_TYPES["image"]:
         st.title(f"🎨 {interaction_type}")
 
-        st.session_state.prompt = st.text_area("What do you want to create?", height=150, key="new_prompt")
+        st.session_state['prompt'] = st.text_area("What do you want to create?", height=150, key="new_prompt")
+
+        with st.expander("Advanced prompt modifiers", icon="🚀"):
+            selected_categories = {
+                "categories": st.multiselect("Select categories to add to the prompt", CATEGORIES),
+                "styles": st.multiselect("Select styles to add to the prompt", STYLES),
+                "lighting": st.multiselect("Select lighting to add to the prompt", LIGHTING),
+                "camera_angles": st.multiselect("Select camera angles to add to the prompt", CAMERA_ANGLES),
+                "colors": st.multiselect("Select colors to add to the prompt", COLORS),
+                "textures": st.multiselect("Select textures to add to the prompt", TEXTURES)}
 
         if st.button("Let's go ✨") and st.session_state.prompt:
             with st.spinner("Generating ..."):
-                generate_images(client, dalle_options)
+                st.session_state.final_prompt = st.session_state.prompt
+                
+                for category, selections in selected_categories.items():
+                    if selections:
+                        st.session_state.final_prompt += ", " + ", ".join(selections)
+                
+                generate_images(client, dalle_options, st.session_state.final_prompt)
+            
             if "image_urls" in st.session_state:
-                save_image_generation(st.session_state.prompt, st.session_state.image_urls)
+                save_image_generation(st.session_state.final_prompt, st.session_state.image_urls)
                 st.rerun()  # Rerun to update the history immediately
 
         if "image_urls" in st.session_state:
             st.markdown("###")
+
             for i, url in enumerate(st.session_state.image_urls):
                 st.image(url, use_column_width=True)
                 response = requests.get(url)
@@ -826,4 +842,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
