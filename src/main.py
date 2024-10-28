@@ -119,12 +119,12 @@ def delete_thread(thread_id: str, threads: Dict[str, Dict[str, Any]]) -> Dict[st
     return threads
 
 
-def save_uploaded_image(image_file: st.uploaded_file_manager.UploadedFile, thread_id: str) -> str:
+def save_uploaded_image(image_file, thread_id: str) -> str:
     """
     Save an uploaded image and return its filename.
 
     Args:
-        image_file (st.uploaded_file_manager.UploadedFile): The uploaded image file
+        image_file: The uploaded image file
         thread_id (str): The ID of the current thread
 
     Returns:
@@ -215,7 +215,7 @@ def prepare_messages(thread_messages: List[Dict[str, Any]], mode: str) -> List[D
     return messages
 
 
-def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], List[st.uploaded_file_manager.UploadedFile], str, Dict[str, Any]]:
+def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Dict[str, Any]], List, str, Dict[str, Any]]:
     """
     Set up the sidebar interface.
 
@@ -223,7 +223,7 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
         threads (Dict[str, Dict[str, Any]]): The current threads dictionary
 
     Returns:
-        Tuple[str, Dict[str, Dict[str, Any]], List[st.uploaded_file_manager.UploadedFile], str, Dict[str, Any]]:
+        Tuple[str, Dict[str, Dict[str, Any]], List, str, Dict[str, Any]]:
         The selected mode, updated threads dictionary, uploaded files, selected tab, and DALL-E options
     """
     with st.sidebar:
@@ -354,13 +354,13 @@ def get_thread_preview(thread_data: Dict[str, Any]) -> str:
     return "Image thread"
 
 
-def process_files(prompt: str, uploaded_files: List[st.uploaded_file_manager.UploadedFile], thread_id: str) -> Tuple[str, List[Dict[str, str]]]:
+def process_files(prompt: str, uploaded_files, thread_id: str) -> Tuple[str, List[Dict[str, str]]]:
     """
     Process uploaded files of all types.
 
     Args:
         prompt (str): The user's prompt
-        uploaded_files (List[st.uploaded_file_manager.UploadedFile]): Uploaded files of any type
+        uploaded_files: Uploaded files of any type
         thread_id (str): The ID of the current thread
 
     Returns:
@@ -421,14 +421,14 @@ def create_message_content(prompt: str, image_data_list: List[Dict[str, str]]) -
     return message_content
 
 
-def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files: List[st.uploaded_file_manager.UploadedFile], mode: str) -> None:
+def handle_chat_input(client: OpenAI, thread: Dict[str, Any], uploaded_files, mode: str) -> None:
     """
     Handle the chat input and generate a response.
 
     Args:
         client (OpenAI): The OpenAI client
         thread (Dict[str, Any]): The current thread
-        uploaded_files (List[st.uploaded_file_manager.UploadedFile]): Uploaded files
+        uploaded_files: Uploaded files
         mode (str): The current chat mode
     """
     if prompt := st.chat_input("What's on your mind ? 🤔"):
