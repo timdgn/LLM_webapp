@@ -14,6 +14,8 @@ import os
 import requests
 import shutil
 import concurrent.futures
+from PIL import Image, ImageDraw
+from streamlit_cropper import st_cropper
 
 from constants import *
 
@@ -23,6 +25,7 @@ def init_directories() -> None:
     os.makedirs(THREADS_DIR, exist_ok=True)
     os.makedirs(UPLOADED_IMAGES_DIR, exist_ok=True)
     os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
+    os.makedirs(INPAINTING_IMAGES_DIR, exist_ok=True)
 
 
 def load_threads() -> Dict[str, Dict[str, Any]]:
@@ -283,6 +286,17 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
                 generations = load_image_generations()
                 display_image_generation_history(generations)
 
+        elif interaction_type == INTERACTION_TYPES["inpainting"]:
+            with st.container(border=True):
+                st.title("🖌️ Inpainting Options")
+                dalle_options['size'] = st.selectbox("Image Size", ["1024x1024"], index=0)
+                
+                st.divider()
+                
+                st.title("🎨 Inpainting History")
+                inpaintings = load_inpainting_history()
+                display_inpainting_history(inpaintings)
+
         st.write("")
 
         with st.container(border=True):
@@ -321,7 +335,7 @@ def display_thread_button(thread_id: str, thread_data: Dict[str, Any], threads: 
 
     col1, col2, col3 = st.columns([0.6, 0.12, 0.1])
     with col1:
-        if st.button(f"{last_updated}: {preview}", key=thread_id):
+        if st.button(f"**{last_updated}** : {preview}", key=thread_id):
             st.session_state.current_thread_id = thread_id
     with col2:
         with st.popover("⬇️"):
@@ -585,14 +599,14 @@ def display_image_generation_history(generations: List[Dict[str, Any]]) -> None:
         col1, col2, col3 = st.columns([3, 1, 0.5])
         with col1:
             with st.popover(f"{timestamp}: {preview}"):
-                
-                st.markdown("##### Prompt :")
-                st.write(generation["prompt"])
-                st.markdown("#")
+                st.markdown(f"**Prompt**: {generation['prompt']}")
 
                 st.markdown(f"##### {len(generation['image_paths'])} images generated :" if len(generation['image_paths']) > 1 else "##### 1 image generated :")
+                captions_list = [f"Image {i+1}" for i in range(len(generation['image_paths']))]
+                st.image(generation["image_paths"], caption=captions_list, width=300)
+                
+                # Boutons de téléchargement en dessous des images
                 for i, image_path in enumerate(generation["image_paths"]):
-                    st.image(image_path, width=300)
                     with open(image_path, "rb") as file:
                         image_bytes = file.read()
                         st.download_button(
@@ -602,7 +616,7 @@ def display_image_generation_history(generations: List[Dict[str, Any]]) -> None:
                             file_name=f"{generation['id']}_image_{i}.png",
                             mime="image/png",
                             key=f"export_{generation['id']}_{i}")
-                    st.markdown("#")
+                st.markdown("#")
         with col2:
             st.image(generation["image_paths"][0], width=75)
         with col3:
@@ -715,6 +729,174 @@ def download_thread_export(thread_data: Dict[str, Any], format: str) -> None:
         key=button_key  # Add the unique key here
     )
 
+def create_mask(image: Image.Image) -> Image.Image:
+    """
+    Create a mask by allowing the user to crop a rectangle on the image using st_cropper.
+    The mask will be black (0) in the selected area and white (255) elsewhere.
+    
+    Args:
+        image (Image.Image): The original image
+    
+    Returns:
+        Image.Image: The inverted mask image
+    """
+    # Display the image and allow the user to crop a rectangle
+    crop_coordinates = st_cropper(
+        image, 
+        realtime_update=True, 
+        box_color="#00ff00", 
+        aspect_ratio=None,
+        return_type="box"
+    )
+    
+    # Create a white mask (255 everywhere)
+    mask = Image.new("L", image.size, 255)
+    draw = ImageDraw.Draw(mask)
+    
+    # Convert width/height to right/bottom coordinates and convert to integers
+    left = int(crop_coordinates['left'])
+    top = int(crop_coordinates['top'])
+    right = int(crop_coordinates['left'] + crop_coordinates['width'])
+    bottom = int(crop_coordinates['top'] + crop_coordinates['height'])
+    
+    # Draw black rectangle (0) on the selected area
+    draw.rectangle([left, top, right, bottom], fill=0)
+    
+    return mask
+
+def generate_inpainting(client: OpenAI, original_image: Image.Image, mask: Image.Image, prompt: str, dalle_options: Dict[str, Any]) -> Image.Image:
+    """
+    Generate an inpainting using DALL-E.
+    
+    Args:
+        client (OpenAI): The OpenAI client
+        original_image (Image.Image): The original image
+        mask (Image.Image): The mask image
+        prompt (str): The prompt for inpainting
+        dalle_options (Dict[str, Any]): Options for DALL-E image generation
+    
+    Returns:
+        Image.Image: The inpainted image
+    """
+    original_image_bytes = io.BytesIO()
+    original_image.save(original_image_bytes, format="PNG")
+    original_image_bytes = original_image_bytes.getvalue()
+    
+    mask_bytes = io.BytesIO()
+    mask.save(mask_bytes, format="PNG")
+    mask_bytes = mask_bytes.getvalue()
+    
+    response = client.images.edit(
+        model="dall-e-2",
+        image=original_image_bytes,
+        mask=mask_bytes,
+        prompt=prompt,
+        size=dalle_options['size']
+    )
+    
+    inpainted_image_url = response.data[0].url
+    inpainted_image_response = requests.get(inpainted_image_url)
+    inpainted_image = Image.open(io.BytesIO(inpainted_image_response.content))
+    
+    return inpainted_image
+
+def save_inpainting(original_image: Image.Image, prompt: str, inpainted_image: Image.Image) -> None:
+    """
+    Save an inpainting to the history.
+    
+    Args:
+        original_image (Image.Image): The original image
+        prompt (str): The prompt used for inpainting
+        inpainted_image (Image.Image): The inpainted image
+    """
+    inpainting_id = str(uuid.uuid4())
+    
+    inpainting_folder = os.path.join(INPAINTING_IMAGES_DIR, inpainting_id)
+    os.makedirs(inpainting_folder, exist_ok=True)
+
+    original_image_path = os.path.join(inpainting_folder, "original.png")
+    original_image.save(original_image_path)
+    
+    inpainted_image_path = os.path.join(inpainting_folder, "inpainted.png")
+    inpainted_image.save(inpainted_image_path)
+    
+    inpainting_data = {
+        "id": inpainting_id,
+        "prompt": prompt,
+        "original_image_path": original_image_path,
+        "inpainted_image_path": inpainted_image_path,
+        "timestamp": datetime.now().isoformat()
+    }
+    file_path = os.path.join(INPAINTING_IMAGES_DIR, f"{inpainting_id}.json")
+    
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(inpainting_data, f, indent=4, ensure_ascii=False)
+
+def load_inpainting_history() -> List[Dict[str, Any]]:
+    """
+    Load all inpaintings from the history directory.
+    
+    Returns:
+        List[Dict[str, Any]]: A list of inpainting data
+    """
+    inpaintings = []
+    for file_path in glob(os.path.join(INPAINTING_IMAGES_DIR, "*.json")):
+        with open(file_path, 'r') as f:
+            inpainting_data = json.load(f)
+            inpaintings.append(inpainting_data)
+    return sorted(inpaintings, key=lambda x: x["timestamp"], reverse=True)
+
+def display_inpainting_history(inpaintings: List[Dict[str, Any]]) -> None:
+    """
+    Display the inpainting history.
+    
+    Args:
+        inpaintings (List[Dict[str, Any]]): The inpaintings to display
+    """
+    for inpainting in inpaintings:
+        timestamp = datetime.fromisoformat(inpainting["timestamp"]).strftime("%Y-%m-%d %H:%M")
+        preview = inpainting["prompt"][:30] + "..."
+        
+        col1, col2, col3 = st.columns([3, 1, 0.5])
+        with col1:
+            with st.popover(f"{timestamp}: {preview}"):
+                st.markdown(f"**Prompt**: {inpainting['prompt']}")
+
+                st.image([inpainting["original_image_path"], inpainting["inpainted_image_path"]],
+                         caption=["Original Image", "Inpainted Image"],
+                         width=300)
+                
+                with open(inpainting["inpainted_image_path"], "rb") as file:
+                    image_bytes = file.read()
+                    st.download_button(
+                        label="Download Inpainted Image",
+                        icon="💾",
+                        data=image_bytes,
+                        file_name=f"inpainted_image_{inpainting['id']}.png",
+                        mime="image/png")
+        
+        with col2:
+            st.image(inpainting["inpainted_image_path"], width=75)
+        
+        with col3:
+            if st.button("❌", key=f"delete_{inpainting['id']}"):
+                delete_inpainting(inpainting['id'])
+                st.rerun()
+
+def delete_inpainting(inpainting_id: str) -> None:
+    """
+    Delete an inpainting from the history.
+    
+    Args:
+        inpainting_id (str): The ID of the inpainting to delete
+    """
+    file_path = os.path.join(INPAINTING_IMAGES_DIR, f"{inpainting_id}.json")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    inpainting_folder = os.path.join(INPAINTING_IMAGES_DIR, inpainting_id)
+    if os.path.exists(inpainting_folder):
+        shutil.rmtree(inpainting_folder)
 
 def main() -> None:
     """Main function to run the Streamlit app."""
@@ -733,7 +915,7 @@ def main() -> None:
     if interaction_type == INTERACTION_TYPES["chat"]:
         st.title(f"🤖 {interaction_type}")
 
-        if st.session_state.current_thread_id is None:
+        if st.session_state.current_thread_id is None or st.session_state.current_thread_id not in threads:
             thread_id, thread_data = create_new_thread()
             st.session_state.current_thread_id = thread_id
             threads[thread_id] = thread_data
@@ -751,7 +933,7 @@ def main() -> None:
     elif interaction_type == INTERACTION_TYPES["image"]:
         st.title(f"🎨 {interaction_type}")
 
-        st.session_state['prompt'] = st.text_area("What do you want to create?", height=150, key="new_prompt")
+        st.session_state['prompt'] = st.text_area("What do you want to create ?", height=150, key="new_prompt")
 
         with st.expander("Advanced prompt modifiers", icon="🚀"):
             selected_categories = {
@@ -791,6 +973,48 @@ def main() -> None:
                     mime="image/png",
                     key=f"download_{i}")
                 st.markdown("###")
+
+    elif interaction_type == INTERACTION_TYPES["inpainting"]:
+        st.title(f"🖌️ {interaction_type}")
+        
+        uploaded_image = st.file_uploader("Upload an image to inpaint", type=["jpg", "jpeg", "png"])
+        
+        if uploaded_image is not None:
+            original_image = Image.open(uploaded_image)
+            
+            mask = create_mask(original_image)
+            
+            if mask is not None:
+                prompt = st.text_input("Enter a prompt for inpainting")
+                
+                if "inpainted_result" not in st.session_state:
+                    st.session_state.inpainted_result = None
+                
+                if st.button("Generate Inpainting"):
+                    with st.spinner("Generating inpainting..."):
+                        inpainted_image = generate_inpainting(client, original_image, mask, prompt, dalle_options)
+                        st.session_state.inpainted_result = inpainted_image
+                        save_inpainting(original_image, prompt, inpainted_image)
+                        st.rerun()
+                
+                if st.session_state.inpainted_result is not None:
+                    st.markdown("###")
+                    st.image(st.session_state.inpainted_result, caption="Inpainted Image", use_column_width=True)
+                    
+                    # Convert image to bytes only once and store in session state
+                    if "download_bytes" not in st.session_state:
+                        buffered = io.BytesIO()
+                        st.session_state.inpainted_result.save(buffered, format="PNG")
+                        st.session_state.download_bytes = buffered.getvalue()
+                    
+                    st.download_button(
+                        label="Download Inpainted Image",
+                        icon="💾",
+                        data=st.session_state.download_bytes,
+                        file_name="inpainted_image.png",
+                        mime="image/png",
+                        key="inpaint_download"  # Add a unique key
+                    )
 
 
 if __name__ == "__main__":

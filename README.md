@@ -74,6 +74,7 @@ For both methods, once the application is running:
 - **Image Generation History Management**: The app saves and loads previous image generations, along with its prompt. You can delete any of the generated images.
 - **Export**: You can export the generated images.
 - **Advanced Prompt Modifiers**: You can select categories, styles, lighting, camera angles, colors and textures to add to your prompt.
+- **Inpainting**: You can upload an image and inpaint it.
 
 ## Next features
 

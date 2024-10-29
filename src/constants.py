@@ -5,9 +5,11 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(__file__))
 THREADS_DIR = os.path.join(PROJECT_DIR, "data", "thread_history")
 UPLOADED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "uploaded_images")
 GENERATED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "generated_images")
+INPAINTING_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "inpainting_images")
 
 INTERACTION_TYPES = {'chat': 'ChatGPT',
-                     'image': 'DALL-E (Image Generation)'}
+                     'image': 'DALL-E (Image Generation)',
+                     'inpainting': 'DALL-E (Inpainting) - Beta ⚠️'}
 
 AVATARS = {"user": "🧑‍⚕️", "assistant": "🤖"}
 
