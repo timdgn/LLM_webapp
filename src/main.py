@@ -300,7 +300,7 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
         st.write("")
 
         with st.container(border=True):
-            st.caption(f'By Timmothy Dangeon, PharmD & Healthcare Machine Learning Engineer')
+            st.caption(f'By Timmothy Dangeon, PharmD & Healthcare Data Scientist')
             st.caption(f'Linkedin : linkedin.com/in/timdangeon')
             st.caption(f'Github : github.com/timdgn')
 
