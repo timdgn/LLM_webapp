@@ -1,6 +1,6 @@
 # LLM_webapp
 
-LLM_webapp is a Streamlit application using the OpenAI ChatGPT 4o mini API to create and manage conversations with a LLM.
+LLM_webapp is a Streamlit application using the OpenAI ChatGPT 4.1 mini API to create and manage conversations with a LLM.
 It can also generate images using the OpenAI DALL-E 3 API. 
 
 <img src="docs/Preview_chat.png" width=75%>

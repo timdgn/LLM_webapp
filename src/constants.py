@@ -7,6 +7,8 @@ UPLOADED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "uploaded_images")
 GENERATED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "generated_images")
 INPAINTING_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "inpainting_images")
 
+MODEL = "gpt-4.1-mini"
+
 INTERACTION_TYPES = {'chat': 'ChatGPT',
                      'image': 'DALL-E (Image Generation)',
                      'inpainting': 'DALL-E (Inpainting) - Beta ⚠️'}

@@ -902,10 +902,9 @@ def main() -> None:
     """Main function to run the Streamlit app."""
     st.set_page_config(page_title="LLM Chat", page_icon="✨")
     api_key = st.secrets["openai_api_key"]
-    model = "gpt-4o-mini"
 
     init_directories()
-    initialize_session_state(model)
+    initialize_session_state(MODEL)
 
     client = OpenAI(api_key=api_key)
     threads = load_threads()
