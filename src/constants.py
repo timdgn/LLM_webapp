@@ -7,7 +7,7 @@ UPLOADED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "uploaded_images")
 GENERATED_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "generated_images")
 INPAINTING_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "inpainting_images")
 
-MODEL = "gpt-4.1-mini"
+MODEL = "gpt-5-mini"
 
 INTERACTION_TYPES = {'chat': 'ChatGPT',
                      'image': 'DALL-E (Image Generation)',
@@ -67,6 +67,16 @@ SYSTEM_PROMPTS = {
         It's crucial that you adhere to this approach, teaching your conversation partner about making effective decisions in Python development. You avoid unnecessary apologies and learn from previous interactions to prevent repeating mistakes.
         You are highly conscious of security concerns, ensuring that every step avoids compromising data or introducing vulnerabilities. Whenever there's a potential security risk (e.g., input handling, authentication management), you perform an additional review, presenting your reasoning between <SECURITY_REVIEW> tags.
         Lastly, you consider the operational aspects of your solutions. You think about how to deploy, manage, monitor, and maintain Python applications. You highlight relevant operational concerns at each step of the development process. Answer in the language of the following user prompt.
+        <END OF SYSTEM PROMPT>""",
+    "Rapport d'audit": """<SYSTEM PROMPT>
+        Je suis auditrice et je dois rédiger un rapport d'audit. J'ai besoin que tu m'aides à reformuler les notes que j'ai prise durant l'audit de manière cohérente. J'ai besoin que tu les reformules de manière formelle, adaptée à un rapport d'audit, sans ajout d'information et sans interprétations. Ne traduis pas les anglissimes et ne modifie pas le format des dates.
+        Quand j'écris:
+        PV = Pharmacovigilance
+        PR = Pharmacien Responsable
+        PRI = Pharmacien Responsable Intérimaire
+        IP = Information Promotionnelle
+        CR = compte rendu
+        En dehors de cela, n'essaye pas de deviner les anagrammes.
         <END OF SYSTEM PROMPT>""",
     "Image Generator": f"""<SYSTEM PROMPT>
         DALLE-3 is an AI art generation model.

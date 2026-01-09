@@ -245,12 +245,13 @@ def setup_sidebar(threads: Dict[str, Dict[str, Any]]) -> Tuple[str, Dict[str, Di
             with st.container(border=True):
                 st.title("⚙️ Select a mode")
                 mode = st.radio(
-                    "Mode", 
+                    "Mode",
                     list(SYSTEM_PROMPTS.keys()),
                     index=0,
                     label_visibility="collapsed",
                     captions=["Perfect for conversations without specific expertise",
-                             "Specialized in Python, data science and code review", 
+                             "Specialized in Python, data science and code review",
+                             "Specialized in reformulating audit notes into formal reports",
                              "Specialized in generating detailed DALL-E prompts"])
 
                 st.divider()
