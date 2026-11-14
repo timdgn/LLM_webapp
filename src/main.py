@@ -962,7 +962,7 @@ def main() -> None:
             st.markdown("###")
 
             for i, url in enumerate(st.session_state.image_urls):
-                st.image(url, use_column_width=True)
+                st.image(url, width="stretch")
                 response = requests.get(url)
                 image_bytes = response.content
                 st.download_button(
@@ -999,7 +999,7 @@ def main() -> None:
                 
                 if st.session_state.inpainted_result is not None:
                     st.markdown("###")
-                    st.image(st.session_state.inpainted_result, caption="Inpainted Image", use_column_width=True)
+                    st.image(st.session_state.inpainted_result, caption="Inpainted Image", width="stretch")
                     
                     # Convert image to bytes only once and store in session state
                     if "download_bytes" not in st.session_state:

@@ -10,7 +10,7 @@ It can also generate images using the OpenAI DALL-E 3 API.
 
 Before starting, make sure you have installed the following dependencies:
 
-- Python 3.11.10
+- Python 3.12.16
 
 ## Installation & Usage
 
